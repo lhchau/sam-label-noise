@@ -37,7 +37,7 @@ def get_cifar100(
         transforms.ToTensor(),
         transforms.Normalize(mean=[0.485, 0.456, 0.406], std=[0.229, 0.224, 0.225])    
     ])
-    labels = apply_label_noise(labels=torch.load("./data/CIFAR-100_human.pt")["clean_label"], noise=noise, num_classes=100)
+    labels = apply_label_noise(labels=torch.load("./dataloader/CIFAR-100_human.pt")["clean_label"], noise=noise, num_classes=100)
     
     data_train = torchvision.datasets.CIFAR100(root='./data', train=True, download=True, transform=transform_train)
     data_test = torchvision.datasets.CIFAR100(root='./data', train=False, download=True, transform=transform_test)
