@@ -1,5 +1,6 @@
 import wandb
 import datetime
+import pprint
 
 import torch
 import torch.nn as nn
@@ -31,6 +32,7 @@ logging_name += ('_' + current_time)
 framework_name = cfg['logging']['framework_name']
 if framework_name == 'wandb':
     wandb.init(project=cfg['logging']['project_name'], name=logging_name, config=cfg)
+pprint.pprint(cfg)
 
 ################################
 #### 1. BUILD THE DATASET

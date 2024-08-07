@@ -16,7 +16,6 @@ comes up with a better simple Python solution I am all ears.
 
 import sys
 import yaml
-import pprint
 from ast import literal_eval
 
 def exec_configurator():
@@ -27,7 +26,6 @@ def exec_configurator():
             yaml_config_file = arg
             with open(yaml_config_file, "r") as yamlfile:
                 cfg = yaml.load(yamlfile, Loader=yaml.Loader)
-                pprint.pprint(cfg)
             print(f"Overriding config with {yaml_config_file}:")
         else:
             # assume it's a --key=value argument
