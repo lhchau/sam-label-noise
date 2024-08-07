@@ -19,7 +19,7 @@ def apply_label_noise(labels, noise, num_classes):
     return labels
 
 
-def get_cifar100(
+def get_cifar10(
     batch_size=128,
     num_workers=4,
     noise=0.25):

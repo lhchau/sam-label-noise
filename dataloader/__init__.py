@@ -1,5 +1,5 @@
 from .cifar100 import get_cifar100
-
+from .cifar10 import get_cifar10
 
 # Data
 def get_dataloader(
@@ -12,4 +12,5 @@ def get_dataloader(
 
     if data_name == "cifar100":
         return get_cifar100(batch_size, num_workers, noise)
-
+    elif data_name == "cifar10":
+        return get_cifar10(batch_size, num_workers, noise)
