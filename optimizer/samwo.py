@@ -39,9 +39,9 @@ class SAMWO(torch.optim.Optimizer):
                 ratio = p.grad.div(param_state['first_grad'].add(1e-8))
                 if self.group == "A":
                     mask = ratio > 1
-                elif self.grou == "B":
+                elif self.group == "B":
                     mask = torch.logical_and(ratio > 0, ratio < 1)
-                elif self.grou == "C":
+                elif self.group == "C":
                     mask = torch.logical_and(ratio < 0)
                 
                 d_p = p.grad.mul(torch.logical_not(mask)) + param_state['first_grad'].mul(mask)
