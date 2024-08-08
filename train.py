@@ -55,7 +55,7 @@ sch = cfg['trainer'].get('sch', None)
 opt_name = cfg['optimizer'].pop('opt_name', None)
 optimizer = get_optimizer(net, opt_name, cfg['optimizer'])
 scheduler = torch.optim.lr_scheduler.CosineAnnealingLR(optimizer, T_max=EPOCHS)
-early_stopping = EarlyStopping(patience=5)
+early_stopping = EarlyStopping(patience=30)
 
 ################################
 #### 3.b Training 
