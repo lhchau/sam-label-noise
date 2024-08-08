@@ -42,7 +42,7 @@ class SAMWO(torch.optim.Optimizer):
                 elif self.group == "B":
                     mask = torch.logical_and(ratio > 0, ratio < 1)
                 elif self.group == "C":
-                    mask = torch.logical_and(ratio < 0)
+                    mask = ratio < 0
                 
                 d_p = p.grad.mul(torch.logical_not(mask)) + param_state['first_grad'].mul(mask)
                 if weight_decay != 0:
