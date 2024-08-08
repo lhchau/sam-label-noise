@@ -93,4 +93,4 @@ def loop_one_epoch(
     logging_dict[f'{loop_type.title()}/acc'] = acc
 
     if loop_type == 'test': 
-        return best_acc
+        return best_acc, acc

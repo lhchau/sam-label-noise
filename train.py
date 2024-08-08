@@ -4,7 +4,6 @@ import pprint
 
 import torch
 import torch.nn as nn
-import torch.backends.cudnn as cudnn
 
 from models import *
 from utils import *
@@ -56,6 +55,7 @@ sch = cfg['trainer'].get('sch', None)
 opt_name = cfg['optimizer'].pop('opt_name', None)
 optimizer = get_optimizer(net, opt_name, cfg['optimizer'])
 scheduler = torch.optim.lr_scheduler.CosineAnnealingLR(optimizer, T_max=EPOCHS)
+early_stopping = EarlyStopping(patience=5)
 
 ################################
 #### 3.b Training 
@@ -73,7 +73,7 @@ if __name__ == "__main__":
             epoch=epoch,
             loop_type='train',
             logging_name=logging_name)
-        best_acc = loop_one_epoch(
+        best_acc, acc = loop_one_epoch(
             dataloader=test_dataloader,
             net=net,
             criterion=criterion,
@@ -88,6 +88,11 @@ if __name__ == "__main__":
         
         if framework_name == 'wandb':
             wandb.log(logging_dict)
+            
+        early_stopping(acc)
+        if early_stopping.early_stop == True:
+            print("\nEarly stopping is activated")
+            break
     
     if framework_name == 'wandb':
         wandb.log(logging_dict)
