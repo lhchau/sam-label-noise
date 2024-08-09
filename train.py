@@ -54,8 +54,9 @@ criterion = nn.CrossEntropyLoss().to(device)
 sch = cfg['trainer'].get('sch', None)
 opt_name = cfg['optimizer'].pop('opt_name', None)
 optimizer = get_optimizer(net, opt_name, cfg['optimizer'])
-scheduler = torch.optim.lr_scheduler.CosineAnnealingLR(optimizer, T_max=EPOCHS)
-early_stopping = EarlyStopping(patience=10)
+# scheduler = torch.optim.lr_scheduler.CosineAnnealingLR(optimizer, T_max=EPOCHS)
+scheduler = torch.optim.lr_scheduler.MultiStepLR(optimizer, milestones=[int(EPOCHS * 0.5), int(EPOCHS * 0.75)])
+early_stopping = EarlyStopping(patience=20)
 
 ################################
 #### 3.b Training 
