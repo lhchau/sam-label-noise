@@ -10,13 +10,18 @@ def apply_label_noise(labels, noise, num_classes):
     This implementation is due to Chiyuan Zhang, see:
     https://github.com/pluskid/fitting-random-labels/blob/master/cifar10_data.py.
     """
-    np.random.seed(1996)
+    # np.random.seed(1996)
     flip_label = np.random.rand(len(labels)) <= noise
     random_labels = np.random.choice(num_classes, flip_label.sum())
 
+    original_labels = labels[flip_label]
+    for i in range(len(random_labels)):
+        while random_labels[i] == original_labels[i]:
+            random_labels[i] = np.random.choice(num_classes)
+
     # For the labels where flip_label is True, replace the labels with random_labels.
     labels[flip_label] = random_labels
-    return labels
+    return labels, flip_label
 
 
 def get_cifar10(
@@ -35,14 +40,14 @@ def get_cifar10(
         transforms.ToTensor(),
         transforms.Normalize(mean=[0.485, 0.456, 0.406], std=[0.229, 0.224, 0.225])    
     ])
-    labels = apply_label_noise(labels=torch.load("./dataloader/CIFAR-10_human.pt")["clean_label"], noise=noise, num_classes=10)
+    labels, flip_label = apply_label_noise(labels=torch.load("./dataloader/CIFAR-10_human.pt")["clean_label"], noise=noise, num_classes=10)
     
     data_train = torchvision.datasets.CIFAR10(root='./data', train=True, download=True, transform=transform_train)
     data_test = torchvision.datasets.CIFAR10(root='./data', train=False, download=True, transform=transform_test)
     
     new_data_train = []
     for i in range(len(data_train)):
-        new_data_train.append((data_train[i][0], labels[i]))
+        new_data_train.append((data_train[i][0], labels[i], flip_label[i]))
     
     train_dataloader = torch.utils.data.DataLoader(new_data_train, batch_size=batch_size, shuffle=True, num_workers=num_workers, pin_memory=True, drop_last=True)
     test_dataloader = torch.utils.data.DataLoader(data_test, batch_size=1000, shuffle=False, num_workers=4, pin_memory=True)

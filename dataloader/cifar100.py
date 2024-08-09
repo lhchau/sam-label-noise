@@ -10,7 +10,6 @@ def apply_label_noise(labels, noise, num_classes):
     This implementation is due to Chiyuan Zhang, see:
     https://github.com/pluskid/fitting-random-labels/blob/master/cifar10_data.py.
     """
-    np.random.seed(1996)
     flip_label = np.random.rand(len(labels)) <= noise
     random_labels = np.random.choice(num_classes, flip_label.sum())
 
