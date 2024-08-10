@@ -7,6 +7,7 @@ import os
 import sys
 import time
 import random
+import pickle
 import numpy as np
 import torch
 import torch.nn as nn
@@ -20,8 +21,10 @@ def get_gradients(optimizer):
             grads.append(p.grad.clone())
     return grads
 
-def get_checkpoint(optimizer):
+def get_checkpoint(optimizer, stored_info=[]):
     num_para_a, num_para_b, num_para_c, total_para = 0, 0, 0, 0
+    if len(stored_info):
+        ratios = []
     for group in optimizer.param_groups:
         for p in group["params"]:
             if p.grad is None: continue
@@ -29,9 +32,15 @@ def get_checkpoint(optimizer):
             total_para += p.numel()
             
             ratio = p.grad.div(param_state['first_grad'].add(1e-8))
+            if len(stored_info):
+                ratios.append(ratio)
             num_para_a += torch.sum( ratio > 1 )
             num_para_b += torch.sum( torch.logical_and( ratio < 1, ratio > 0) )
             num_para_c += torch.sum( ratio <= 0)
+    if len(stored_info):
+        epoch = stored_info[0]
+        with open(f'./stored/ratios_epoch{epoch}.pkl', 'wb') as f:
+            pickle.dump(ratios, f)
     return {
         'num_para_a': (num_para_a / total_para) * 100,
         'num_para_b': (num_para_b / total_para) * 100,

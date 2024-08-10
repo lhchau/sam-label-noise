@@ -2,3 +2,4 @@ data
 checkpoint
 __pycache__
 wandb
+stored

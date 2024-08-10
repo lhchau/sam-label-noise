@@ -72,6 +72,7 @@ def loop_one_epoch(
                 progress_bar(batch_idx, len(dataloader), 'Loss: %.3f | Acc: %.3f%% (%d/%d) | Noise: %.3f%% (%d/%d) | Clean: %.3f%% (%d/%d)'% (loss_mean, acc, correct, total, noise_acc, noise_correct, noise_total, clean_acc, clean_correct, clean_total))
         logging_dict[f'{loop_type.title()}/noise_acc'] = noise_acc
         logging_dict[f'{loop_type.title()}/clean_acc'] = clean_acc
+        logging_dict[f'{loop_type.title()}/gap_clean_noise_acc'] = clean_acc - noise_acc
     else:
         net.eval()
         with torch.no_grad():
