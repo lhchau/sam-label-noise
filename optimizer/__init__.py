@@ -3,6 +3,7 @@ from .sam import SAM
 from .samonly import SAMONLY
 from .samwo import SAMWO
 from .samen import SAMEN
+from .samenu import SAMENU
 
 def get_optimizer(
     net,
@@ -18,5 +19,7 @@ def get_optimizer(
         return SAMWO(net.parameters(), **opt_hyperpara)
     elif opt_name == 'samen':
         return SAMEN(net.parameters(), **opt_hyperpara)
+    elif opt_name == 'samenu':
+        return SAMENU(net.parameters(), **opt_hyperpara)
     else:
         raise ValueError("Invalid optimizer!!!")
