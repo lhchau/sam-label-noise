@@ -1,13 +1,15 @@
 import torch
+import numpy as np
 
 
-class SAMENU(torch.optim.Optimizer):
-    def __init__(self, params, rho=0.05, adaptive=False, condition1=1, condition2=1, condition3=1, **kwargs):
+class SAMEAN(torch.optim.Optimizer):
+    def __init__(self, params, rho=0.05, adaptive=False, group="B", condition=1, **kwargs):
         assert rho >= 0.0, f"Invalid rho, should be non-negative: {rho}"
 
         defaults = dict(rho=rho, adaptive=adaptive, **kwargs)
-        super(SAMENU, self).__init__(params, defaults)
-        self.condition1, self.condition2, self.condition3 = condition1, condition2, condition3
+        super(SAMEAN, self).__init__(params, defaults)
+        self.group = group
+        self.condition = condition
         
     @torch.no_grad()
     def first_step(self, zero_grad=False):   
@@ -27,6 +29,17 @@ class SAMENU(torch.optim.Optimizer):
 
     @torch.no_grad()
     def second_step(self, zero_grad=False):
+        mean_ratio = []
+        for group in self.param_groups:
+            for p in group['params']:
+                if p.grad is None: continue
+                param_state = self.state[p]
+                
+                param_state['ratio'] = p.grad.div(param_state['first_grad'].add(1e-8))
+                param_state['ratio'] = torch.where( param_state['ratio'] > 1e3, 0, param_state['ratio'])
+                mean_ratio.append(torch.mean(param_state['ratio'].abs()).item())
+                
+        mean_ratio = np.mean(mean_ratio)
         for group in self.param_groups:
             weight_decay = group["weight_decay"]
             step_size = group['lr']
@@ -36,11 +49,15 @@ class SAMENU(torch.optim.Optimizer):
                 param_state = self.state[p]
                 p.sub_(param_state['e_w'])  # get back to "w" from "w + e(w)"
                 
-                ratio = p.grad.div(param_state['first_grad'].add(1e-8))
-                maskB = torch.logical_and(ratio > 0, ratio < 1)
-                maskC = ratio < 0
+                # ratio = p.grad.div(param_state['first_grad'].add(1e-8))
+                if self.group == "A":
+                    mask = param_state['ratio'] > mean_ratio
+                elif self.group == "B":
+                    mask = torch.logical_and(param_state['ratio'] > 0, param_state['ratio'] < mean_ratio)
+                elif self.group == "C":
+                    mask = param_state['ratio'] < 0
                 
-                d_p = p.grad.mul(maskB).mul(self.condition1) + p.grad.mul(maskC).mul(self.condition2) + p.grad.mul(torch.logical_not(maskB | maskC)).mul(self.condition3)
+                d_p = p.grad.mul(mask).mul(self.condition) + p.grad.mul(torch.logical_not(mask))
                 if weight_decay != 0:
                     d_p.add_(p.data, alpha=weight_decay)
                     
