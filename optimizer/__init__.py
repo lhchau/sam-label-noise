@@ -7,6 +7,7 @@ from .samenu import SAMENU
 from .gsamv2 import GSAMV2
 from .customsam import CUSTOMSAM
 from .samean import SAMEAN
+from .samagreement import SAMAGREEMENT
 
 def get_optimizer(
     net,
@@ -30,5 +31,7 @@ def get_optimizer(
         return CUSTOMSAM(net.parameters(), **opt_hyperpara)
     elif opt_name == 'samean':
         return SAMEAN(net.parameters(), **opt_hyperpara)
+    elif opt_name == 'samagreement':
+        return SAMAGREEMENT(net.parameters(), **opt_hyperpara)
     else:
         raise ValueError("Invalid optimizer!!!")

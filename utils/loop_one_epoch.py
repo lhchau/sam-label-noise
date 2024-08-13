@@ -51,6 +51,8 @@ def loop_one_epoch(
                     logging_dict.update(get_checkpoint(optimizer))
                 
                 optimizer.second_step(zero_grad=True)
+                if opt_name == 'SAMAGREEMENT':
+                    optimizer.third_step(zero_grad=True)
                 
             with torch.no_grad():
                 loss += first_loss.item()
