@@ -52,6 +52,7 @@ def loop_one_epoch(
                 
                 optimizer.second_step(zero_grad=True)
                 if opt_name == 'SAMAGREEMENT':
+                    criterion(net(inputs), targets).backward()
                     optimizer.third_step(zero_grad=True)
                 
             with torch.no_grad():
