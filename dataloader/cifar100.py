@@ -42,7 +42,7 @@ class CIFAR100Noisy(torchvision.datasets.CIFAR100):
 
         return img, target, flip_label
  
-def get_cifar10(
+def get_cifar100(
     batch_size=128,
     num_workers=4,
     noise=0.25):
