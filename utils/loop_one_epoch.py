@@ -28,7 +28,7 @@ def loop_one_epoch(
     if loop_type == 'train': 
         net.train()
         for batch_idx, (inputs, targets, noise_masks) in enumerate(dataloader):
-            inputs, targets, noise_masks = inputs.to(device, non_blocking=True), targets.to(device, non_blocking=True), noise_masks.to(device, non_blocking=True)
+            inputs, targets, noise_masks = inputs.to(device), targets.to(device), noise_masks.to(device)
             
             opt_name = type(optimizer).__name__
             if opt_name == 'SGD':
@@ -51,16 +51,13 @@ def loop_one_epoch(
                     logging_dict.update(get_checkpoint(optimizer))
                 
                 optimizer.second_step(zero_grad=True)
-                if opt_name == 'SAMAGREEMENT':
-                    criterion(net(inputs), targets).backward()
-                    optimizer.third_step(zero_grad=True)
                 
             with torch.no_grad():
                 loss += first_loss.item()
                 loss_mean = loss/(batch_idx+1)
+                _, predicted = outputs.max(1)
                 
                 total += targets.size(0)
-                _, predicted = outputs.max(1)
                 correct += predicted.eq(targets).sum().item()
                 acc = 100.*correct/total
                 
@@ -73,6 +70,7 @@ def loop_one_epoch(
                 clean_acc = 100.*clean_correct/clean_total
                 
                 progress_bar(batch_idx, len(dataloader), 'Loss: %.3f | Acc: %.3f%% (%d/%d) | Noise: %.3f%% (%d/%d) | Clean: %.3f%% (%d/%d)'% (loss_mean, acc, correct, total, noise_acc, noise_correct, noise_total, clean_acc, clean_correct, clean_total))
+                
         logging_dict[f'{loop_type.title()}/noise_acc'] = noise_acc
         logging_dict[f'{loop_type.title()}/clean_acc'] = clean_acc
         logging_dict[f'{loop_type.title()}/gap_clean_noise_acc'] = clean_acc - noise_acc
@@ -81,6 +79,7 @@ def loop_one_epoch(
         with torch.no_grad():
             for batch_idx, (inputs, targets) in enumerate(dataloader):
                 inputs, targets = inputs.to(device), targets.to(device)
+                
                 outputs = net(inputs)
                 first_loss = criterion(outputs, targets)
 
@@ -91,8 +90,7 @@ def loop_one_epoch(
 
                 loss_mean = loss/(batch_idx+1)
                 acc = 100.*correct/total
-                progress_bar(batch_idx, len(dataloader), 'Loss: %.3f | Acc: %.3f%% (%d/%d)'
-                            % (loss_mean, acc, correct, total))
+                progress_bar(batch_idx, len(dataloader), 'Loss: %.3f | Acc: %.3f%% (%d/%d)'% (loss_mean, acc, correct, total))
             if acc > best_acc:
                 print('Saving best checkpoint ...')
                 state = {

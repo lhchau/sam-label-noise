@@ -3,47 +3,66 @@ import torch
 import torchvision
 import torchvision.transforms as transforms
 import numpy as np
+from PIL import Image
 from .cutout import Cutout
 
-def apply_label_noise(labels, noise, num_classes):
-    """Applies label noise to the clean labels in the proportion specified in :param noise_level.
-    This implementation is due to Chiyuan Zhang, see:
-    https://github.com/pluskid/fitting-random-labels/blob/master/cifar10_data.py.
-    """
-    flip_label = np.random.rand(len(labels)) <= noise
-    random_labels = np.random.choice(num_classes, flip_label.sum())
+class CIFAR100Noisy(torchvision.datasets.CIFAR100):
+    def __init__(self, root, train=True, transform=None, target_transform=None, download=False, noise_rate=0.2):
+        super(CIFAR100Noisy, self).__init__(root, train=train, transform=transform, target_transform=target_transform, download=download)
+        self.noise_rate = noise_rate
+        self.noisy_labels = self.targets.copy()  # Copy the original labels
 
-    # For the labels where flip_label is True, replace the labels with random_labels.
-    labels[flip_label] = random_labels
-    return labels
+        if self.train:
+            self._apply_noise()
 
+    def _apply_noise(self):
+        num_samples = len(self.noisy_labels)
+        num_noisy = int(self.noise_rate * num_samples)
+        noisy_indices = np.random.choice(num_samples, num_noisy, replace=False)
 
-def get_cifar100(
+        self.flip_labels = torch.zeros(num_samples, dtype=torch.bool)
+        self.flip_labels[noisy_indices] = True
+
+        for idx in noisy_indices:
+            current_label = self.noisy_labels[idx]
+            new_label = np.random.choice([x for x in range(100) if x != current_label])
+            self.noisy_labels[idx] = new_label
+
+    def __getitem__(self, index):
+        img, target, flip_label = self.data[index], self.noisy_labels[index], self.flip_labels[index]
+
+        img = Image.fromarray(img)
+        
+        # Apply the transformations if any
+        if self.transform is not None:
+            img = self.transform(img)
+
+        if self.target_transform is not None:
+            target = self.target_transform(target)
+
+        return img, target, flip_label
+ 
+def get_cifar10(
     batch_size=128,
     num_workers=4,
     noise=0.25):
     transform_train = transforms.Compose([
-        transforms.RandomCrop(32, padding=4),
         transforms.RandomHorizontalFlip(),
+        transforms.RandomCrop(32, padding=4),
         transforms.ToTensor(),
-        transforms.Normalize(mean=[0.485, 0.456, 0.406], std=[0.229, 0.224, 0.225])        
+        transforms.Normalize((0.4914, 0.4822, 0.4465), (0.2023, 0.1994, 0.2010)),
         # Cutout()
     ])
 
     transform_test = transforms.Compose([
         transforms.ToTensor(),
-        transforms.Normalize(mean=[0.485, 0.456, 0.406], std=[0.229, 0.224, 0.225])    
+        transforms.Normalize((0.4914, 0.4822, 0.4465), (0.2023, 0.1994, 0.2010)),
     ])
-    labels = apply_label_noise(labels=torch.load("./dataloader/CIFAR-100_human.pt")["clean_label"], noise=noise, num_classes=100)
     
-    data_train = torchvision.datasets.CIFAR100(root='./data', train=True, download=True, transform=transform_train)
-    data_test = torchvision.datasets.CIFAR100(root='./data', train=False, download=True, transform=transform_test)
+    data_train = CIFAR100Noisy(root='./data', train=True, download=True, transform=transform_train, noise_rate=noise)
+    data_test = torchvision.datasets.CIFAR10(root='./data', train=False, download=True, transform=transform_test)
     
-    new_data_train = []
-    for i in range(len(data_train)):
-        new_data_train.append((data_train[i][0], labels[i]))
-    
-    train_dataloader = torch.utils.data.DataLoader(new_data_train, batch_size=batch_size, shuffle=True, num_workers=num_workers, pin_memory=True, drop_last=True)
+    train_dataloader = torch.utils.data.DataLoader(data_train, batch_size=batch_size, shuffle=True, num_workers=num_workers, pin_memory=True, drop_last=True)
     test_dataloader = torch.utils.data.DataLoader(data_test, batch_size=1000, shuffle=False, num_workers=4, pin_memory=True)
     
     return train_dataloader, test_dataloader, len(data_test.classes)

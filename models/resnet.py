@@ -88,15 +88,21 @@ class ResNet(nn.Module):
         """
         self.conv1 = nn.Conv2d(3, int(64 * widen_factor), kernel_size=3, stride=1, padding=1, bias=False)
         self.bn1 = nn.BatchNorm2d(int(64 * widen_factor))
+        self.relu = nn.ReLU(inplace=True)
+        # self.maxpool = nn.MaxPool2d(kernel_size=3, stride=2, padding=1)
         self.layer1 = self._make_layer(block, int(64 * widen_factor), num_blocks[0], stride=1)
         self.layer2 = self._make_layer(block, int(128 * widen_factor), num_blocks[1], stride=2)
         self.layer3 = self._make_layer(block, int(256 * widen_factor), num_blocks[2], stride=2)
         self.layer4 = self._make_layer(block, int(512 * widen_factor), num_blocks[3], stride=2)
+        self.avgpool2d = nn.AdaptiveAvgPool2d((1, 1))
         self.linear = nn.Linear(int(512*block.expansion*widen_factor), num_classes)
-    
-        self.activate = F.relu
-        # self.activate = nn.LeakyReLU(negative_slope=0.1, inplace=True)
-        self.avgpool2d = nn.AdaptiveAvgPool2d(1)
+        
+        for m in self.modules():
+            if isinstance(m, nn.Conv2d):
+                nn.init.kaiming_normal_(m.weight, mode="fan_out", nonlinearity="relu")
+            elif isinstance(m, (nn.BatchNorm2d, nn.GroupNorm)):
+                nn.init.constant_(m.weight, 1)
+                nn.init.constant_(m.bias, 0)
 
     def _make_layer(self, block, planes, num_blocks, stride):
         strides = [stride] + [1]*(num_blocks-1)
@@ -107,12 +113,14 @@ class ResNet(nn.Module):
         return nn.Sequential(*layers)
 
     def forward(self, x):
-        out = self.activate(self.bn1(self.conv1(x)))
+        out = self.relu(self.bn1(self.conv1(x)))
         # out = self.maxpool(out)
+        
         out = self.layer1(out)
         out = self.layer2(out)
         out = self.layer3(out)
         out = self.layer4(out)
+        
         out = self.avgpool2d(out)
         out = torch.flatten(out, 1)
         out = self.linear(out)
