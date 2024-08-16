@@ -4,6 +4,9 @@ from .samonly import SAMONLY
 from .samwo import SAMWO
 from .samen import SAMEN
 from .gsamv2 import GSAMV2
+from .samensq import SAMENSQ
+from .samenabs import SAMENABS
+from .samenbc import SAMENBC
 
 def get_optimizer(
     net,
@@ -21,5 +24,11 @@ def get_optimizer(
         return SAMEN(net.parameters(), **opt_hyperpara)
     elif opt_name == 'gsamv2':
         return GSAMV2(net.parameters(), **opt_hyperpara)
+    elif opt_name == 'samensq':
+        return SAMENSQ(net.parameters(), **opt_hyperpara)
+    elif opt_name == 'samenabs':
+        return SAMENABS(net.parameters(), **opt_hyperpara)
+    elif opt_name == 'samenbc':
+        return SAMENBC(net.parameters(), **opt_hyperpara)
     else:
         raise ValueError("Invalid optimizer!!!")
