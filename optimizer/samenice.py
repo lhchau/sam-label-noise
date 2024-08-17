@@ -1,13 +1,14 @@
 import torch
 
 
-class SAMWO(torch.optim.Optimizer):
-    def __init__(self, params, rho=0.05, adaptive=False, group="B", alpha=1, **kwargs):
+class SAMENICE(torch.optim.Optimizer):
+    def __init__(self, params, rho=0.05, adaptive=False, group="B", condition=1, alpha=1, **kwargs):
         assert rho >= 0.0, f"Invalid rho, should be non-negative: {rho}"
 
         defaults = dict(rho=rho, adaptive=adaptive, **kwargs)
-        super(SAMWO, self).__init__(params, defaults)
+        super(SAMENICE, self).__init__(params, defaults)
         self.group = group
+        self.condition = condition
         self.alpha = alpha
         
     @torch.no_grad()
@@ -45,7 +46,7 @@ class SAMWO(torch.optim.Optimizer):
                 elif self.group == "C":
                     mask = ratio < 0
                 
-                d_p = p.grad.mul(torch.logical_not(mask)) + param_state['first_grad'].mul(mask)
+                d_p = p.grad.mul(mask).mul(self.condition) + p.grad.mul(torch.logical_not(mask))
                 if weight_decay != 0:
                     d_p.add_(p.data, alpha=weight_decay)
                     

@@ -7,6 +7,8 @@ from .gsamv2 import GSAMV2
 from .samensq import SAMENSQ
 from .samenabs import SAMENABS
 from .samenbc import SAMENBC
+from .samenice import SAMENICE
+from .samwoexplore import SAMWOEXPLORE
 
 def get_optimizer(
     net,
@@ -30,5 +32,9 @@ def get_optimizer(
         return SAMENABS(net.parameters(), **opt_hyperpara)
     elif opt_name == 'samenbc':
         return SAMENBC(net.parameters(), **opt_hyperpara)
+    elif opt_name == 'samenice':
+        return SAMENICE(net.parameters(), **opt_hyperpara)
+    elif opt_name == 'samwoexplore':
+        return SAMWOEXPLORE(net.parameters(), **opt_hyperpara)
     else:
         raise ValueError("Invalid optimizer!!!")

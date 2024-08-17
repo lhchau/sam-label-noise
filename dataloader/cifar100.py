@@ -5,17 +5,20 @@ import torchvision.transforms as transforms
 import numpy as np
 from PIL import Image
 from .cutout import Cutout
+from .tools import DependentLabelGenerator
 
 class CIFAR100Noisy(torchvision.datasets.CIFAR100):
-    def __init__(self, root, train=True, transform=None, target_transform=None, download=False, noise_rate=0.2):
+    def __init__(self, root, train=True, transform=None, noise_type='symmetric', target_transform=None, download=False, noise_rate=0.2):
         super(CIFAR100Noisy, self).__init__(root, train=train, transform=transform, target_transform=target_transform, download=download)
         self.noise_rate = noise_rate
         self.noisy_labels = self.targets.copy()  # Copy the original labels
-
+        self.num_classes = len(self.classes)
+        if noise_type == 'dependent':
+            self.noise_label_gen = DependentLabelGenerator(self.num_classes, 32 * 32 * 3, transform) 
         if self.train:
-            self._apply_noise()
+            self._apply_noise(noise_type)
 
-    def _apply_noise(self):
+    def _apply_noise(self, noise_type):
         num_samples = len(self.noisy_labels)
         num_noisy = int(self.noise_rate * num_samples)
         noisy_indices = np.random.choice(num_samples, num_noisy, replace=False)
@@ -25,7 +28,12 @@ class CIFAR100Noisy(torchvision.datasets.CIFAR100):
 
         for idx in noisy_indices:
             current_label = self.noisy_labels[idx]
-            new_label = np.random.choice([x for x in range(100) if x != current_label])
+            if noise_type == 'symmetric':
+                new_label = np.random.choice([x for x in range(self.num_classes) if x != current_label])
+            elif noise_type == 'asymmetric':
+                new_label = (current_label + 1) % self.num_classes
+            elif noise_type == 'dependent':
+                new_label = self.noise_label_gen.generate_dependent_labels(self.data[idx], current_label)
             self.noisy_labels[idx] = new_label
 
     def __getitem__(self, index):
@@ -45,7 +53,8 @@ class CIFAR100Noisy(torchvision.datasets.CIFAR100):
 def get_cifar100(
     batch_size=128,
     num_workers=4,
-    noise=0.25):
+    noise=0.25,
+    noise_type='symmetric'):
     transform_train = transforms.Compose([
         transforms.RandomHorizontalFlip(),
         transforms.RandomCrop(32, padding=4),
@@ -59,7 +68,7 @@ def get_cifar100(
         transforms.Normalize((0.4914, 0.4822, 0.4465), (0.2023, 0.1994, 0.2010)),
     ])
     
-    data_train = CIFAR100Noisy(root='./data', train=True, download=True, transform=transform_train, noise_rate=noise)
+    data_train = CIFAR100Noisy(root='./data', train=True, download=True, transform=transform_train, noise_rate=noise, noise_type=noise_type)
     data_test = torchvision.datasets.CIFAR10(root='./data', train=False, download=True, transform=transform_test)
     
     train_dataloader = torch.utils.data.DataLoader(data_train, batch_size=batch_size, shuffle=True, num_workers=num_workers, pin_memory=True, drop_last=True)

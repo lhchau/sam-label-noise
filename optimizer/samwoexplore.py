@@ -1,14 +1,14 @@
 import torch
 
 
-class SAMWO(torch.optim.Optimizer):
-    def __init__(self, params, rho=0.05, adaptive=False, group="B", alpha=1, **kwargs):
+class SAMWOEXPLORE(torch.optim.Optimizer):
+    def __init__(self, params, rho=0.05, adaptive=False, alpha=1, condition=1, **kwargs):
         assert rho >= 0.0, f"Invalid rho, should be non-negative: {rho}"
 
         defaults = dict(rho=rho, adaptive=adaptive, **kwargs)
-        super(SAMWO, self).__init__(params, defaults)
-        self.group = group
+        super(SAMWOEXPLORE, self).__init__(params, defaults)
         self.alpha = alpha
+        self.condition = condition
         
     @torch.no_grad()
     def first_step(self, zero_grad=False):   
@@ -38,14 +38,9 @@ class SAMWO(torch.optim.Optimizer):
                 p.sub_(param_state['e_w'])  # get back to "w" from "w + e(w)"
                 
                 ratio = p.grad.div(param_state['first_grad'].add(1e-8))
-                if self.group == "A":
-                    mask = ratio > self.alpha
-                elif self.group == "B":
-                    mask = torch.logical_and(ratio > 0, ratio < self.alpha)
-                elif self.group == "C":
-                    mask = ratio < 0
+                mask = torch.logical_and(ratio > 1, ratio < self.alpha)
                 
-                d_p = p.grad.mul(torch.logical_not(mask)) + param_state['first_grad'].mul(mask)
+                d_p = p.grad.mul(torch.logical_not(mask)) + param_state['first_grad'].mul(mask).mul(self.condition)
                 if weight_decay != 0:
                     d_p.add_(p.data, alpha=weight_decay)
                     
