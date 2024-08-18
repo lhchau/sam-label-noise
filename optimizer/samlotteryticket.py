@@ -1,14 +1,14 @@
 import torch
 
 
-class SAMWO(torch.optim.Optimizer):
-    def __init__(self, params, rho=0.05, adaptive=False, group="B", alpha=1, **kwargs):
+class SAMLOTTERYTICKET(torch.optim.Optimizer):
+    def __init__(self, params, rho=0.05, adaptive=False, percentage=0.2, condition=1, **kwargs):
         assert rho >= 0.0, f"Invalid rho, should be non-negative: {rho}"
 
         defaults = dict(rho=rho, adaptive=adaptive, **kwargs)
-        super(SAMWO, self).__init__(params, defaults)
-        self.group = group
-        self.alpha = alpha
+        super(SAMLOTTERYTICKET, self).__init__(params, defaults)
+        self.percentage = percentage
+        self.condition = condition
         
     @torch.no_grad()
     def first_step(self, zero_grad=False):   
@@ -28,26 +28,27 @@ class SAMWO(torch.optim.Optimizer):
 
     @torch.no_grad()
     def second_step(self, zero_grad=False):
+        all_ratios = []
+        for group in self.param_groups:
+            for p in group['params']:
+                if p.grad is None: continue
+                param_state = self.state[p]
+                all_ratios.append(p.grad.div(param_state['first_grad'].add(1e-8)))
+        cat_all_ratios = torch.cat([ratio.flatten() for ratio in all_ratios])
+        threshold = torch.quantile(cat_all_ratios, 1 - self.percentage)
+        
         for group in self.param_groups:
             weight_decay = group["weight_decay"]
             step_size = group['lr']
             momentum = group['momentum']
-            for p in group['params']:
+            for p, ratio in zip(group['params'], all_ratios):
                 if p.grad is None: continue
                 param_state = self.state[p]
                 p.sub_(param_state['e_w'])  # get back to "w" from "w + e(w)"
                 
-                ratio = p.grad.div(param_state['first_grad'].add(1e-8))
-                if self.group == "A":
-                    mask = ratio > self.alpha
-                elif self.group == "B":
-                    mask = torch.logical_and(ratio > 0, ratio < self.alpha)
-                elif self.group == "C":
-                    mask = ratio < 0
-                elif self.group == "AB":
-                    mask = ratio > 0
+                mask = ratio > threshold
                 
-                d_p = p.grad.mul(torch.logical_not(mask)) + param_state['first_grad'].mul(mask)
+                d_p = p.grad.mul(mask) + p.grad.mul(torch.logical_not(mask)).mul(self.condition)
                 if weight_decay != 0:
                     d_p.add_(p.data, alpha=weight_decay)
                     

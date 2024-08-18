@@ -34,6 +34,8 @@ class CIFAR10Noisy(torchvision.datasets.CIFAR10):
                 new_label = np.random.choice([x for x in range(self.num_classes) if x != current_label])
             elif noise_type == 'asymmetric':
                 new_label = self.transition[current_label]
+                if new_label == current_label:
+                    self.flip_labels[idx] = False
             elif noise_type == 'dependent':
                 new_label = self.noise_label_gen.generate_dependent_labels(self.data[idx], current_label)
             self.noisy_labels[idx] = new_label

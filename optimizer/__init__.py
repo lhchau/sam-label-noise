@@ -9,6 +9,7 @@ from .samenabs import SAMENABS
 from .samenbc import SAMENBC
 from .samenice import SAMENICE
 from .samwoexplore import SAMWOEXPLORE
+from .samlotteryticket import SAMLOTTERYTICKET
 
 def get_optimizer(
     net,
@@ -36,5 +37,7 @@ def get_optimizer(
         return SAMENICE(net.parameters(), **opt_hyperpara)
     elif opt_name == 'samwoexplore':
         return SAMWOEXPLORE(net.parameters(), **opt_hyperpara)
+    elif opt_name == 'samlotteryticket':
+        return SAMLOTTERYTICKET(net.parameters(), **opt_hyperpara)
     else:
         raise ValueError("Invalid optimizer!!!")
