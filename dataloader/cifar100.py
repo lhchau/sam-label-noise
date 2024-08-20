@@ -20,21 +20,29 @@ class CIFAR100Noisy(torchvision.datasets.CIFAR100):
 
     def _apply_noise(self, noise_type):
         num_samples = len(self.noisy_labels)
-        num_noisy = int(self.noise_rate * num_samples)
-        noisy_indices = np.random.choice(num_samples, num_noisy, replace=False)
+        if noise_type == 'real':
+            self.noisy_labels = get_real_world_cifar("cifar100")
 
-        self.flip_labels = torch.zeros(num_samples, dtype=torch.bool)
-        self.flip_labels[noisy_indices] = True
+            self.flip_labels = torch.zeros(num_samples, dtype=torch.bool)
+            for idx, (target, noisy_target) in enumerate(zip(self.targets, self.noisy_labels)):
+                if target != noisy_target:
+                    self.flip_labels[idx] = True
+        else:
+            num_noisy = int(self.noise_rate * num_samples)
+            noisy_indices = np.random.choice(num_samples, num_noisy, replace=False)
 
-        for idx in noisy_indices:
-            current_label = self.noisy_labels[idx]
-            if noise_type == 'symmetric':
-                new_label = np.random.choice([x for x in range(self.num_classes) if x != current_label])
-            elif noise_type == 'asymmetric':
-                new_label = (current_label + 1) % self.num_classes
-            elif noise_type == 'dependent':
-                new_label = self.noise_label_gen.generate_dependent_labels(self.data[idx], current_label)
-            self.noisy_labels[idx] = new_label
+            self.flip_labels = torch.zeros(num_samples, dtype=torch.bool)
+            self.flip_labels[noisy_indices] = True
+
+            for idx in noisy_indices:
+                current_label = self.noisy_labels[idx]
+                if noise_type == 'symmetric':
+                    new_label = np.random.choice([x for x in range(self.num_classes) if x != current_label])
+                elif noise_type == 'asymmetric':
+                    new_label = (current_label + 1) % self.num_classes
+                elif noise_type == 'dependent':
+                    new_label = self.noise_label_gen.generate_dependent_labels(self.data[idx], current_label)
+                self.noisy_labels[idx] = new_label
 
     def __getitem__(self, index):
         img, target, flip_label = self.data[index], self.noisy_labels[index], self.flip_labels[index]
@@ -49,7 +57,18 @@ class CIFAR100Noisy(torchvision.datasets.CIFAR100):
             target = self.target_transform(target)
 
         return img, target, flip_label
+
+def get_real_world_cifar(dataset="cifar10"):
+    import torch
+    if dataset == "cifar10":
+        noise_label = torch.load('./data/CIFAR-10_human.pt')
+        noisy_label = noise_label['worse_label']
+    else:
+        noise_label = torch.load('./data/CIFAR-100_human.pt')
+        noisy_label = noise_label['noisy_label']
+    return noisy_label
  
+
 def get_cifar100(
     batch_size=128,
     num_workers=4,
@@ -69,7 +88,7 @@ def get_cifar100(
     ])
     
     data_train = CIFAR100Noisy(root='./data', train=True, download=True, transform=transform_train, noise_rate=noise, noise_type=noise_type)
-    data_test = torchvision.datasets.CIFAR10(root='./data', train=False, download=True, transform=transform_test)
+    data_test = torchvision.datasets.CIFAR100(root='./data', train=False, download=True, transform=transform_test)
     
     train_dataloader = torch.utils.data.DataLoader(data_train, batch_size=batch_size, shuffle=True, num_workers=num_workers, pin_memory=True, drop_last=True)
     test_dataloader = torch.utils.data.DataLoader(data_test, batch_size=1000, shuffle=False, num_workers=4, pin_memory=True)
