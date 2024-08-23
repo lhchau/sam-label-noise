@@ -54,6 +54,7 @@ criterion = nn.CrossEntropyLoss()
 opt_name = cfg['optimizer'].pop('opt_name', None)
 optimizer = get_optimizer(net, opt_name, cfg['optimizer'])
 scheduler = torch.optim.lr_scheduler.MultiStepLR(optimizer, milestones=[int(EPOCHS * 0.5), int(EPOCHS * 0.75)])
+early_stopping = EarlyStopping(patience=20)
 
 ################################
 #### 3.b Training 
@@ -86,6 +87,10 @@ if __name__ == "__main__":
         
         if framework_name == 'wandb':
             wandb.log(logging_dict)
+        if (epoch + 1) > 100:
+            early_stopping(acc)
+            if early_stopping.early_stop:
+                break
             
     # if framework_name == 'wandb':
     #     wandb.log(logging_dict)
