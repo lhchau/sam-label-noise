@@ -33,6 +33,7 @@ if framework_name == 'wandb':
     wandb.init(project=cfg['logging']['project_name'], name=logging_name, config=cfg)
 pprint.pprint(cfg)
 
+resume = cfg['trainer'].get('resume', None)
 ################################
 #### 1. BUILD THE DATASET
 ################################
@@ -43,6 +44,14 @@ train_dataloader, test_dataloader, num_classes = get_dataloader(**cfg['dataloade
 ################################
 net = get_model(**cfg['model'], num_classes=num_classes)
 net = net.to(device)
+if resume:
+    print('==> Resuming from best checkpoint..')
+    assert os.path.isdir('checkpoint'), 'Error: no checkpoint directory found!'
+    load_path = os.path.join('checkpoint', resume, 'ckpt_best.pth')
+    checkpoint = torch.load(load_path)
+    net.load_state_dict(checkpoint['net'])
+    start_epoch = checkpoint['epoch']
+    best_acc = checkpoint['acc']
 
 total_params = sum(p.numel() for p in net.parameters())
 print(f'==> Number of parameters in {cfg["model"]}: {total_params}')
@@ -60,6 +69,9 @@ early_stopping = EarlyStopping(patience=20)
 #### 3.b Training 
 ################################
 if __name__ == "__main__":
+    if resume:
+        for epoch in range(0, start_epoch+1):
+            scheduler.step()
     for epoch in range(start_epoch, start_epoch+EPOCHS):
         print('\nEpoch: %d' % epoch)
         loop_one_epoch(

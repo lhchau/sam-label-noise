@@ -154,3 +154,16 @@ def test():
     print(y.size())
 
 # test()
+
+if __name__ == "__main__":
+    widths = [1, 1.5, 2]
+    for w in widths:
+        net = resnet18(num_classes=100, widen_factor=w)
+        print(f"Rn18_wi={w}", sum(p.numel() for p in net.parameters()))
+    net = resnet34(num_classes=100)
+    print(f"Rn34_wi=1", sum(p.numel() for p in net.parameters()))
+    net = resnet50(num_classes=100)
+    print(f"Rn50_wi=1", sum(p.numel() for p in net.parameters()))
+    net = resnet101(num_classes=100)
+    print(f"Rn101_wi=1", sum(p.numel() for p in net.parameters()))
+

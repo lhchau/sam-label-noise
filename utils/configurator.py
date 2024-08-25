@@ -30,7 +30,8 @@ def exec_configurator():
         else:
             # assume it's a --key=value argument
             assert arg.startswith('--')
-            key, val = arg.split('=')
+            idx = arg.find('=')
+            key, val = arg[:idx], arg[idx+1:]
             key = key[2:]
             parent_key, child_key = key.split('.')
             try:
