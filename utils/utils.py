@@ -21,6 +21,16 @@ def get_gradients(optimizer):
             grads.append(p.grad.clone())
     return grads
 
+def get_norm(optimizer):
+    logging_dict = {}
+    if hasattr(optimizer, 'first_grad_norm'):
+        logging_dict['first_grad_norm'] = optimizer.first_grad_norm
+    if hasattr(optimizer, 'second_grad_norm'):
+        logging_dict['second_grad_norm'] = optimizer.second_grad_norm
+    if hasattr(optimizer, 'd_t_grad_norm'):
+        logging_dict['d_t_grad_norm'] = optimizer.d_t_grad_norm
+    return logging_dict
+    
 def get_checkpoint(optimizer, stored_info=[]):
     num_para_a, num_para_b, num_para_c, total_para = 0, 0, 0, 0
     if len(stored_info):

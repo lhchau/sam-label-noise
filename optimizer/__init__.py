@@ -10,6 +10,8 @@ from .samenbc import SAMENBC
 from .samenice import SAMENICE
 from .samwoexplore import SAMWOEXPLORE
 from .samlotteryticket import SAMLOTTERYTICKET
+from .normsamean import NORMSAMEAN
+from .normsam import NORMSAM
 
 def get_optimizer(
     net,
@@ -39,5 +41,9 @@ def get_optimizer(
         return SAMWOEXPLORE(net.parameters(), **opt_hyperpara)
     elif opt_name == 'samlotteryticket':
         return SAMLOTTERYTICKET(net.parameters(), **opt_hyperpara)
+    elif opt_name == 'normsamean':
+        return NORMSAMEAN(net.parameters(), **opt_hyperpara)
+    elif opt_name == 'normsam':
+        return NORMSAM(net.parameters(), **opt_hyperpara)
     else:
         raise ValueError("Invalid optimizer!!!")

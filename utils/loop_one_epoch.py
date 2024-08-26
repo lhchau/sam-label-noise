@@ -49,6 +49,7 @@ def loop_one_epoch(
                 
                 if (batch_idx + 1) % len(dataloader) == 0:
                     logging_dict.update(get_checkpoint(optimizer))
+                    logging_dict.update(get_norm(optimizer))
                 
                 optimizer.second_step(zero_grad=True)
                 
