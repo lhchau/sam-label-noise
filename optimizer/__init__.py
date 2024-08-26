@@ -12,6 +12,7 @@ from .samwoexplore import SAMWOEXPLORE
 from .samlotteryticket import SAMLOTTERYTICKET
 from .normsamean import NORMSAMEAN
 from .normsam import NORMSAM
+from .warmupsamean import WARMUPSAMEAN
 
 def get_optimizer(
     net,
@@ -45,5 +46,7 @@ def get_optimizer(
         return NORMSAMEAN(net.parameters(), **opt_hyperpara)
     elif opt_name == 'normsam':
         return NORMSAM(net.parameters(), **opt_hyperpara)
+    elif opt_name == 'warmupsamean':
+        return WARMUPSAMEAN(net.parameters(), **opt_hyperpara)
     else:
         raise ValueError("Invalid optimizer!!!")
