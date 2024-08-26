@@ -1,12 +1,13 @@
 import torch
 
 
-class SAMENSQ(torch.optim.Optimizer):
-    def __init__(self, params, rho=0.05, adaptive=False, **kwargs):
+class POWERSAMEAN(torch.optim.Optimizer):
+    def __init__(self, params, rho=0.05, adaptive=False, k=1, **kwargs):
         assert rho >= 0.0, f"Invalid rho, should be non-negative: {rho}"
 
         defaults = dict(rho=rho, adaptive=adaptive, **kwargs)
-        super(SAMENSQ, self).__init__(params, defaults)
+        super(POWERSAMEAN, self).__init__(params, defaults)
+        self.k = k
         
     @torch.no_grad()
     def first_step(self, zero_grad=False):   
@@ -38,7 +39,7 @@ class SAMENSQ(torch.optim.Optimizer):
                 ratio = p.grad.div(param_state['first_grad'].add(1e-6))
                 maskB = torch.logical_and(ratio > 0, ratio < 1)
                 ratio = torch.where(maskB, ratio, 0)
-                ratio_sq = torch.pow(ratio, 4)
+                ratio_sq = torch.pow(ratio, self.k)
                 
                 d_p = param_state['first_grad'].mul(ratio_sq) + p.grad.mul(torch.logical_not(maskB))
                 if weight_decay != 0:

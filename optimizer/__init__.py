@@ -4,7 +4,7 @@ from .samonly import SAMONLY
 from .samwo import SAMWO
 from .samen import SAMEN
 from .gsamv2 import GSAMV2
-from .samensq import SAMENSQ
+from .powersamean import POWERSAMEAN
 from .samenabs import SAMENABS
 from .samenbc import SAMENBC
 from .samenice import SAMENICE
@@ -30,7 +30,7 @@ def get_optimizer(
     elif opt_name == 'gsamv2':
         return GSAMV2(net.parameters(), **opt_hyperpara)
     elif opt_name == 'samensq':
-        return SAMENSQ(net.parameters(), **opt_hyperpara)
+        return POWERSAMEAN(net.parameters(), **opt_hyperpara)
     elif opt_name == 'samenabs':
         return SAMENABS(net.parameters(), **opt_hyperpara)
     elif opt_name == 'samenbc':
