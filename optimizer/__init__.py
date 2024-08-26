@@ -29,7 +29,7 @@ def get_optimizer(
         return SAMEN(net.parameters(), **opt_hyperpara)
     elif opt_name == 'gsamv2':
         return GSAMV2(net.parameters(), **opt_hyperpara)
-    elif opt_name == 'samensq':
+    elif opt_name == 'powersamean':
         return POWERSAMEAN(net.parameters(), **opt_hyperpara)
     elif opt_name == 'samenabs':
         return SAMENABS(net.parameters(), **opt_hyperpara)
