@@ -27,8 +27,10 @@ def loop_one_epoch(
     
     if loop_type == 'train': 
         net.train()
-        for batch_idx, (inputs, targets, noise_masks) in enumerate(dataloader):
-            inputs, targets, noise_masks = inputs.to(device), targets.to(device), noise_masks.to(device)
+        # for batch_idx, (inputs, targets, noise_masks) in enumerate(dataloader):
+        #     inputs, targets, noise_masks = inputs.to(device), targets.to(device), noise_masks.to(device)
+        for batch_idx, (inputs, targets) in enumerate(dataloader):
+            inputs, targets, = inputs.to(device), targets.to(device)
             
             opt_name = type(optimizer).__name__
             if opt_name == 'SGD':
@@ -62,19 +64,20 @@ def loop_one_epoch(
                 correct += predicted.eq(targets).sum().item()
                 acc = 100.*correct/total
                 
-                noise_total += noise_masks.sum().item()
-                noise_correct += predicted.eq(targets).mul(noise_masks).sum().item()
-                noise_acc = 100.*noise_correct/noise_total
+                # noise_total += noise_masks.sum().item()
+                # noise_correct += predicted.eq(targets).mul(noise_masks).sum().item()
+                # noise_acc = 100.*noise_correct/noise_total
                 
-                clean_total += (targets.size(0) - noise_masks.sum().item())
-                clean_correct += predicted.eq(targets).mul(torch.logical_not(noise_masks)).sum().item()
-                clean_acc = 100.*clean_correct/clean_total
+                # clean_total += (targets.size(0) - noise_masks.sum().item())
+                # clean_correct += predicted.eq(targets).mul(torch.logical_not(noise_masks)).sum().item()
+                # clean_acc = 100.*clean_correct/clean_total
                 
-                progress_bar(batch_idx, len(dataloader), 'Loss: %.3f | Acc: %.3f%% (%d/%d) | Noise: %.3f%% (%d/%d) | Clean: %.3f%% (%d/%d)'% (loss_mean, acc, correct, total, noise_acc, noise_correct, noise_total, clean_acc, clean_correct, clean_total))
-                
-        logging_dict[f'{loop_type.title()}/noise_acc'] = noise_acc
-        logging_dict[f'{loop_type.title()}/clean_acc'] = clean_acc
-        logging_dict[f'{loop_type.title()}/gap_clean_noise_acc'] = clean_acc - noise_acc
+                # progress_bar(batch_idx, len(dataloader), 'Loss: %.3f | Acc: %.3f%% (%d/%d) | Noise: %.3f%% (%d/%d) | Clean: %.3f%% (%d/%d)'% (loss_mean, acc, correct, total, noise_acc, noise_correct, noise_total, clean_acc, clean_correct, clean_total))
+                progress_bar(batch_idx, len(dataloader), 'Loss: %.3f | Acc: %.3f%% (%d/%d)'% (loss_mean, acc, correct, total))
+
+        # logging_dict[f'{loop_type.title()}/noise_acc'] = noise_acc
+        # logging_dict[f'{loop_type.title()}/clean_acc'] = clean_acc
+        # logging_dict[f'{loop_type.title()}/gap_clean_noise_acc'] = clean_acc - noise_acc
     else:
         net.eval()
         with torch.no_grad():

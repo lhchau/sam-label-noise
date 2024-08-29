@@ -2,7 +2,9 @@ from .resnet import *
 from .wideresnet import *
 from .squeezenet import *
 from .densenet import *
+from .inceptionresnetv2 import inceptionresnetv2
 from torchvision.models import efficientnet_b0
+import torchvision
 
 
 def get_model(model_name, num_classes, widen_factor=1):
@@ -28,5 +30,9 @@ def get_model(model_name, num_classes, widen_factor=1):
         return squeezenet(num_classes=num_classes)
     elif model_name == "efficientnet_b0":
         return efficientnet_b0(num_classes=num_classes)
+    elif model_name == "inceptionresnetv2":
+        return inceptionresnetv2(num_classes=num_classes, pretrained=False)
+    elif model_name == "resnet18_webvision":
+        return torchvision.models.resnet18(num_classes=num_classes)
     else:
         raise ValueError("Invalid model!!!")
