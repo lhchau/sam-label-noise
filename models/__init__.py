@@ -34,5 +34,7 @@ def get_model(model_name, num_classes, widen_factor=1):
         return inceptionresnetv2(num_classes=num_classes, pretrained=False)
     elif model_name == "resnet18_webvision":
         return torchvision.models.resnet18(num_classes=num_classes)
+    elif model_name == "resnet50_webvision":
+        return torchvision.models.resnet50(num_classes=num_classes)
     else:
         raise ValueError("Invalid model!!!")
