@@ -8,7 +8,8 @@ def get_dataloader(
     batch_size=256,
     num_workers=4,
     noise=0.25,
-    noise_type='symmetric'
+    noise_type='symmetric',
+    resize_image=224
 ):
     print('==> Preparing data..')
 
@@ -17,4 +18,4 @@ def get_dataloader(
     elif data_name == "cifar10":
         return get_cifar10(batch_size, num_workers, noise, noise_type)
     elif data_name == "miniwebvision":
-        return get_miniwebvision(batch_size, num_workers)
+        return get_miniwebvision(batch_size, num_workers, resize_image)

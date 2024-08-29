@@ -6,9 +6,10 @@ from torchvision import datasets
 
 def get_miniwebvision(
     batch_size=128,
-    num_workers=4
+    num_workers=4,
+    resize_image=224
 ):
-    resize_image = 224
+    resize_image = resize_image
     
     train_transform=v2.Compose([ 
         v2.RandomResizedCrop((resize_image, resize_image)),
