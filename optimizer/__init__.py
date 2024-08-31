@@ -13,6 +13,7 @@ from .samlotteryticket import SAMLOTTERYTICKET
 from .normsamean import NORMSAMEAN
 from .normsam import NORMSAM
 from .warmupsamean import WARMUPSAMEAN
+from .schedulersamean import SCHEDULERSAMEAN
 
 def get_optimizer(
     net,
@@ -48,5 +49,7 @@ def get_optimizer(
         return NORMSAM(net.parameters(), **opt_hyperpara)
     elif opt_name == 'warmupsamean':
         return WARMUPSAMEAN(net.parameters(), **opt_hyperpara)
+    elif opt_name == 'schedulersamean':
+        return SCHEDULERSAMEAN(net.parameters(), **opt_hyperpara)
     else:
         raise ValueError("Invalid optimizer!!!")

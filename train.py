@@ -74,6 +74,8 @@ if __name__ == "__main__":
             scheduler.step()
     for epoch in range(start_epoch, start_epoch+EPOCHS):
         print('\nEpoch: %d' % epoch)
+        if cfg['trainer']['alpha_scheduler']:
+            optimizer.set_alpha(get_alpha(epoch, initial_alpha=1, final_alpha=cfg['optimizer']['condition'], total_epochs=EPOCHS))
         loop_one_epoch(
             dataloader=train_dataloader,
             net=net,

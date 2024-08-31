@@ -13,6 +13,10 @@ import torch
 import torch.nn as nn
 import torch.nn.init as init
 
+def get_alpha(epoch, initial_alpha, final_alpha, total_epochs):
+    alpha = initial_alpha - (initial_alpha - final_alpha) * (epoch / total_epochs)
+    return alpha
+
 def get_gradients(optimizer):
     grads = []
     for group in optimizer.param_groups:
