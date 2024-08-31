@@ -103,7 +103,7 @@ class SCHEDULERSAMEAN(torch.optim.Optimizer):
         return norm
     
     def set_alpha(self, alpha):
-        self.alpha = alpha
+        self.condition = alpha
     
     def load_state_dict(self, state_dict):
         super().load_state_dict(state_dict)
