@@ -34,6 +34,7 @@ if framework_name == 'wandb':
 pprint.pprint(cfg)
 
 resume = cfg['trainer'].get('resume', None)
+alpha_scheduler = cfg['trainer'].get('alpha_scheduler', None)
 ################################
 #### 1. BUILD THE DATASET
 ################################
@@ -74,7 +75,7 @@ if __name__ == "__main__":
             scheduler.step()
     for epoch in range(start_epoch, start_epoch+EPOCHS):
         print('\nEpoch: %d' % epoch)
-        if cfg['trainer']['alpha_scheduler']:
+        if alpha_scheduler:
             optimizer.set_alpha(get_alpha(epoch, initial_alpha=1, final_alpha=cfg['optimizer']['condition'], total_epochs=EPOCHS))
         loop_one_epoch(
             dataloader=train_dataloader,

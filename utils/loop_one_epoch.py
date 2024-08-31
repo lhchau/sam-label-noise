@@ -23,7 +23,7 @@ def loop_one_epoch(
     clean_correct = 0
     noise_total = 0
     noise_correct = 0
-    
+    noise_acc, clean_acc = 0, 0
     
     if loop_type == 'train': 
         net.train()
