@@ -35,29 +35,45 @@ def loop_one_epoch(
                 inputs, targets, noise_masks = batch
                 inputs, targets, noise_masks = inputs.to(device), targets.to(device), noise_masks.to(device)
             
-            opt_name = type(optimizer).__name__
-            if opt_name == 'SGD':
-                outputs = net(inputs)
-                first_loss = criterion(outputs, targets)
-                first_loss.backward()
-                optimizer.step()
+            if (batch_idx + 1) % len(dataloader) == 0:
+                clean_inputs, noise_inputs = inputs[noise_masks == 0], inputs[noise_masks == 1]
+                clean_targets, noise_targets = targets[noise_masks == 0], targets[noise_masks == 1]
+                
+                clean_outputs = net(clean_inputs)
+                clean_loss = criterion(clean_outputs, clean_targets)
+                clean_loss.backward()
+                clean_grads = get_gradients(optimizer)
                 optimizer.zero_grad()
-            else:
-                enable_running_stats(net)  # <- this is the important line
-                outputs = net(inputs)
-                first_loss = criterion(outputs, targets)
-                first_loss.backward()        
-                optimizer.first_step(zero_grad=True)
                 
-                disable_running_stats(net)  # <- this is the important line
-                criterion(net(inputs), targets).backward()
+                noise_outputs = net(noise_inputs)
+                noise_loss = criterion(noise_outputs, noise_targets)
+                noise_loss.backward()
+                noise_grads = get_gradients(optimizer)
+                optimizer.zero_grad()
+            
+            enable_running_stats(net)  # <- this is the important line
+            outputs = net(inputs)
+            first_loss = criterion(outputs, targets)
+            first_loss.backward()        
+            optimizer.first_step(zero_grad=True)
+            
+            disable_running_stats(net)  # <- this is the important line
+            criterion(net(inputs), targets).backward()
+            if (batch_idx + 1) % len(dataloader) == 0:
+                logging_dict.update(get_checkpoint(optimizer))
+                logging_dict.update(get_norm(optimizer))
                 
-                if (batch_idx + 1) % len(dataloader) == 0:
-                    logging_dict.update(get_checkpoint(optimizer))
-                    logging_dict.update(get_norm(optimizer))
-                
-                optimizer.second_step(zero_grad=True)
-                
+                sam_grads, masks_grB = get_grads_and_masks_at_group(optimizer, 'B')
+                prop_clean_less_sam = calculate_num_para_A_less_magnitude_than_B(clean_grads, sam_grads, masks_grB)
+                prop_sam_less_noise = calculate_num_para_A_less_magnitude_than_B(sam_grads, noise_grads, masks_grB)
+                logging_dict.update({
+                    'prop_clean_less_sam': prop_clean_less_sam,
+                    'prop_sam_less_noise': prop_sam_less_noise
+                })
+            
+            optimizer.second_step(zero_grad=True)
+            
+            
             with torch.no_grad():
                 loss += first_loss.item()
                 loss_mean = loss/(batch_idx+1)

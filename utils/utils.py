@@ -13,6 +13,15 @@ import torch
 import torch.nn as nn
 import torch.nn.init as init
 
+def calculate_num_para_A_less_magnitude_than_B(grads_A, grads_B, mask):
+    cnt = 0
+    total_para = sum([torch.sum(m) for m in mask])
+    for grad_A, grad_B, m in zip(grads_A, grads_B, mask):
+        magnitude_comparison = (grad_A.abs() < grad_B.abs())
+        masked_comparison = magnitude_comparison[m == 1]
+        cnt += masked_comparison.sum().item()
+    return (cnt / total_para) * 100
+
 def get_alpha(epoch, initial_alpha, final_alpha, total_epochs):
     if epoch < total_epochs:
         alpha = initial_alpha - (initial_alpha - final_alpha) * (epoch / total_epochs)
@@ -27,6 +36,26 @@ def get_gradients(optimizer):
             if p.grad is None: continue
             grads.append(p.grad.clone())
     return grads
+
+def get_grads_and_masks_at_group(optimizer, group='B'):
+    grads, masks = [], []
+    for group in optimizer.param_groups:
+        for p in group["params"]:
+            if p.grad is None: continue
+            param_state = optimizer.state[p]
+            
+            ratio = p.grad.div(param_state['first_grad'].add(1e-8))
+            
+            if group == 'A':
+                mask = ratio > 1
+            elif group == 'B':
+                mask = torch.logical_and(ratio < 1, ratio > 0)
+            else:
+                mask = ratio <= 0
+            masks.append(mask)
+            grads.append(p.grad.mul(mask))
+    return grads, masks
+    
 
 def get_norm(optimizer):
     logging_dict = {}
