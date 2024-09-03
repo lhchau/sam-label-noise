@@ -95,3 +95,7 @@ class SqueezeNet(nn.Module):
 
 def squeezenet(num_classes=100):
     return SqueezeNet(num_classes=num_classes)
+
+if __name__ == "__main__":
+    net = squeezenet(num_classes=100)
+    print(f"squeezenet", sum(p.numel() for p in net.parameters()))

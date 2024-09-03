@@ -185,3 +185,9 @@ def wideresnet28_10(num_classes):
 
 def wideresnet40_2(num_classes):
     return Network(input_shape=(1, 3, 32, 32), num_classes=num_classes, depth=40, widening_factor=2, base_channels=16)  
+
+if __name__ == "__main__":
+    net = wideresnet40_2(num_classes=100)
+    print(f"wideresnet40_2", sum(p.numel() for p in net.parameters()))
+    net = wideresnet28_10(num_classes=100)
+    print(f"wideresnet28_10", sum(p.numel() for p in net.parameters()))

@@ -75,15 +75,22 @@ def get_cifar10(
     batch_size=128,
     num_workers=4,
     noise=0.25,
-    noise_type='symmetric'):
-    transform_train = transforms.Compose([
-        transforms.RandomHorizontalFlip(),
-        transforms.RandomCrop(32, padding=4),
-        transforms.ToTensor(),
-        transforms.Normalize((0.4914, 0.4822, 0.4465), (0.2023, 0.1994, 0.2010)),
-        # Cutout()
-    ])
-
+    noise_type='symmetric',
+    data_augmentation="standard"):
+    if data_augmentation == "standard":
+        transform_train = transforms.Compose([
+            transforms.RandomHorizontalFlip(),
+            transforms.RandomCrop(32, padding=4),
+            transforms.ToTensor(),
+            transforms.Normalize((0.4914, 0.4822, 0.4465), (0.2023, 0.1994, 0.2010)),
+            # Cutout()
+        ])
+    elif data_augmentation == "off":
+        transform_train = transforms.Compose([
+            transforms.ToTensor(),
+            transforms.Normalize((0.4914, 0.4822, 0.4465), (0.2023, 0.1994, 0.2010)),
+        ])
+        
     transform_test = transforms.Compose([
         transforms.ToTensor(),
         transforms.Normalize((0.4914, 0.4822, 0.4465), (0.2023, 0.1994, 0.2010)),

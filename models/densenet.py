@@ -127,3 +127,8 @@ def densenet201(num_classes):
 
 def densenet161(num_classes):
     return DenseNet(Bottleneck, [6,12,36,24], growth_rate=48, num_classes=num_classes)
+
+
+if __name__ == "__main__":
+    net = densenet121(num_classes=100)
+    print(f"densenet121", sum(p.numel() for p in net.parameters()))
