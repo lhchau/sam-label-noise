@@ -39,40 +39,89 @@ def loop_one_epoch(
                 clean_inputs, noise_inputs = inputs[noise_masks == 0], inputs[noise_masks == 1]
                 clean_targets, noise_targets = targets[noise_masks == 0], targets[noise_masks == 1]
                 
-                clean_outputs = net(clean_inputs)
-                clean_loss = criterion(clean_outputs, clean_targets)
+                outputs = net(inputs)
+                clean_outputs = outputs[torch.logical_not(noise_masks)]
+                clean_targets = targets[torch.logical_not(noise_masks)]
+                
+                num_clean_examples = clean_inputs.shape[0]
+                clean_loss = criterion(clean_outputs, clean_targets) * (num_clean_examples)
                 clean_loss.backward()
                 clean_grads = get_gradients(optimizer)
                 optimizer.zero_grad()
                 
-                noise_outputs = net(noise_inputs)
-                noise_loss = criterion(noise_outputs, noise_targets)
+                outputs = net(inputs)
+                noise_outputs = outputs[noise_masks]
+                noise_targets = targets[noise_masks]
+                
+                num_noise_examples = noise_inputs.shape[0]
+                noise_loss = criterion(noise_outputs, noise_targets) * (num_noise_examples)
                 noise_loss.backward()
                 noise_grads = get_gradients(optimizer)
                 optimizer.zero_grad()
-            
+                
+                outputs = net(inputs)
+                total_loss = criterion(outputs, targets) * len(outputs)
+                total_loss.backward()
+                total_grads = get_gradients(optimizer)
+                optimizer.zero_grad()
+                
             enable_running_stats(net)  # <- this is the important line
             outputs = net(inputs)
             first_loss = criterion(outputs, targets)
             first_loss.backward()        
+            
             optimizer.first_step(zero_grad=True)
             
             disable_running_stats(net)  # <- this is the important line
             criterion(net(inputs), targets).backward()
+            
             if (batch_idx + 1) % len(dataloader) == 0:
                 logging_dict.update(get_checkpoint(optimizer))
                 logging_dict.update(get_norm(optimizer))
                 
+                get_group_B(optimizer, epoch)
+                
                 sam_grads, masks_grB = get_grads_and_masks_at_group(optimizer, 'B')
                 prop_clean_less_sam = calculate_num_para_A_less_magnitude_than_B(clean_grads, sam_grads, masks_grB)
                 prop_sam_less_noise = calculate_num_para_A_less_magnitude_than_B(sam_grads, noise_grads, masks_grB)
+                prop_clean_less_noise = calculate_num_para_A_less_magnitude_than_B(clean_grads, noise_grads, masks_grB)
+                
+                masks_not_grB = [torch.logical_not(mask) for mask in masks_grB]
+                prop_clean_less_sam_notB = calculate_num_para_A_less_magnitude_than_B(clean_grads, sam_grads, masks_not_grB)
+                prop_sam_less_noise_notB = calculate_num_para_A_less_magnitude_than_B(sam_grads, noise_grads, masks_not_grB)
+                prop_clean_less_noise_notB = calculate_num_para_A_less_magnitude_than_B(clean_grads, noise_grads, masks_not_grB)
+                
+                prop_clean_less_sam_notB_same_sign = calculate_num_para_A_less_magnitude_than_B_same_sign(clean_grads, sam_grads, masks_not_grB)
+                prop_sam_less_noise_notB_same_sign = calculate_num_para_A_less_magnitude_than_B_same_sign(sam_grads, noise_grads, masks_not_grB)
+                prop_clean_less_noise_notB_same_sign = calculate_num_para_A_less_magnitude_than_B_same_sign(clean_grads, noise_grads, masks_not_grB)
+                
+                prop_clean_less_sam_same_sign = calculate_num_para_A_less_magnitude_than_B_same_sign(clean_grads, sam_grads, masks_grB)
+                prop_sam_less_noise_same_sign = calculate_num_para_A_less_magnitude_than_B_same_sign(sam_grads, noise_grads, masks_grB)
+                prop_clean_less_noise_same_sign = calculate_num_para_A_less_magnitude_than_B_same_sign(clean_grads, noise_grads, masks_grB)
+                
+                clean_norm = calculate_norm(clean_grads, masks_grB)
+                noise_norm = calculate_norm(noise_grads, masks_grB)
+                total_norm = calculate_norm(total_grads, masks_grB)
+                
                 logging_dict.update({
                     'prop_clean_less_sam': prop_clean_less_sam,
-                    'prop_sam_less_noise': prop_sam_less_noise
+                    'prop_sam_less_noise': prop_sam_less_noise,
+                    'prop_clean_less_noise': prop_clean_less_noise,
+                    'prop_clean_less_sam_notB': prop_clean_less_sam_notB,
+                    'prop_sam_less_noise_notB': prop_sam_less_noise_notB,
+                    'prop_clean_less_noise_notB': prop_clean_less_noise_notB,
+                    'prop_clean_less_sam_notB_same_sign': prop_clean_less_sam_notB_same_sign,
+                    'prop_sam_less_noise_notB_same_sign': prop_sam_less_noise_notB_same_sign,
+                    'prop_clean_less_noise_notB_same_sign': prop_clean_less_noise_notB_same_sign,
+                    'prop_clean_less_sam_same_sign': prop_clean_less_sam_same_sign,
+                    'prop_sam_less_noise_same_sign': prop_sam_less_noise_same_sign,
+                    'prop_clean_less_noise_same_sign': prop_clean_less_noise_same_sign,
+                    'norm/clean_norm': clean_norm,
+                    'norm/noise_norm': noise_norm,
+                    'norm/total_norm': total_norm
                 })
             
             optimizer.second_step(zero_grad=True)
-            
             
             with torch.no_grad():
                 loss += first_loss.item()

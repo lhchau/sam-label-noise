@@ -13,6 +13,45 @@ import torch
 import torch.nn as nn
 import torch.nn.init as init
 
+def calculate_norm(grads, mask):
+    norm = torch.norm(
+                torch.stack([
+                    grad.mul(m).norm(p=2)
+                    for grad, m in zip(grads, mask)
+                ]),
+                p=2
+        )
+    return norm
+
+def get_group_B(optimizer, epoch):
+    ratioB = []
+    for group in optimizer.param_groups:
+        for p in group["params"]:
+            if p.grad is None: continue
+            param_state = optimizer.state[p]
+            
+            ratio = p.grad.div(param_state['first_grad'].add(1e-8))
+            maskB = torch.logical_and(ratio < 1, ratio > 0)
+            ratioB.append(ratio.mul(maskB))
+    with open(f'./stored/ratioB_epoch{epoch}.pkl', 'wb') as f:
+        pickle.dump(ratioB, f)
+
+def check_total_grad(grads_A, grads_B, total_grads):
+    for grad_A, grad_B, grads in zip(grads_A, grads_B, total_grads):
+        mask = (grad_A.add(grad_B) - grads).abs() > 1e-6
+        cnt = torch.sum(mask)
+        if cnt > 0:
+            print("Not equal")
+
+def calculate_num_para_A_less_magnitude_than_B_same_sign(grads_A, grads_B, mask):
+    cnt = 0
+    total_para = sum([torch.sum(m) for m in mask])
+    for grad_A, grad_B, m in zip(grads_A, grads_B, mask):
+        magnitude_comparison = torch.logical_and(grad_A.abs() < grad_B.abs(), grad_A.mul(grad_B) > 0)
+        masked_comparison = magnitude_comparison[m == 1]
+        cnt += masked_comparison.sum().item()
+    return (cnt / total_para) * 100
+
 def calculate_num_para_A_less_magnitude_than_B(grads_A, grads_B, mask):
     cnt = 0
     total_para = sum([torch.sum(m) for m in mask])
