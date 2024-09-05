@@ -13,6 +13,20 @@ import torch
 import torch.nn as nn
 import torch.nn.init as init
 
+def get_mask_A_less_magnitude_than_B_diff_sign(grads_A, grads_B):
+    masks = []
+    for grad_A, grad_B in zip(grads_A, grads_B):
+        masks.append(torch.logical_and(grad_A.abs() < grad_B.abs(), grad_A.mul(grad_B) < 0))
+    return masks
+
+def count_overlap_two_mask(masksA, masksB):
+    cnt = 0
+    total_para = 0
+    for maskA, maskB in zip(masksA, masksB):
+        total_para += torch.sum(maskB)
+        cnt += torch.sum(torch.logical_and(maskA, maskB))
+    return cnt / total_para
+
 def calculate_norm(grads, mask):
     norm = torch.norm(
                 torch.stack([
@@ -76,7 +90,7 @@ def get_gradients(optimizer):
             grads.append(p.grad.clone())
     return grads
 
-def get_grads_and_masks_at_group(optimizer, group='B'):
+def get_grads_and_masks_at_group(optimizer, gr='B'):
     grads, masks = [], []
     for group in optimizer.param_groups:
         for p in group["params"]:
@@ -85,9 +99,9 @@ def get_grads_and_masks_at_group(optimizer, group='B'):
             
             ratio = p.grad.div(param_state['first_grad'].add(1e-8))
             
-            if group == 'A':
+            if gr == 'A':
                 mask = ratio > 1
-            elif group == 'B':
+            elif gr == 'B':
                 mask = torch.logical_and(ratio < 1, ratio > 0)
             else:
                 mask = ratio <= 0

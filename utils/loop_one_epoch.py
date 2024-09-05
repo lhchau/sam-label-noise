@@ -79,46 +79,26 @@ def loop_one_epoch(
                 logging_dict.update(get_checkpoint(optimizer))
                 logging_dict.update(get_norm(optimizer))
                 
-                get_group_B(optimizer, epoch)
+                bad_masks = get_mask_A_less_magnitude_than_B_diff_sign(clean_grads, noise_grads)
+                _, masksA = get_grads_and_masks_at_group(optimizer, gr='A')
+                _, masksB = get_grads_and_masks_at_group(optimizer, gr='B')
+                _, masksC = get_grads_and_masks_at_group(optimizer, gr='C')
                 
-                sam_grads, masks_grB = get_grads_and_masks_at_group(optimizer, 'B')
-                prop_clean_less_sam = calculate_num_para_A_less_magnitude_than_B(clean_grads, sam_grads, masks_grB)
-                prop_sam_less_noise = calculate_num_para_A_less_magnitude_than_B(sam_grads, noise_grads, masks_grB)
-                prop_clean_less_noise = calculate_num_para_A_less_magnitude_than_B(clean_grads, noise_grads, masks_grB)
-                
-                masks_not_grB = [torch.logical_not(mask) for mask in masks_grB]
-                prop_clean_less_sam_notB = calculate_num_para_A_less_magnitude_than_B(clean_grads, sam_grads, masks_not_grB)
-                prop_sam_less_noise_notB = calculate_num_para_A_less_magnitude_than_B(sam_grads, noise_grads, masks_not_grB)
-                prop_clean_less_noise_notB = calculate_num_para_A_less_magnitude_than_B(clean_grads, noise_grads, masks_not_grB)
-                
-                prop_clean_less_sam_notB_same_sign = calculate_num_para_A_less_magnitude_than_B_same_sign(clean_grads, sam_grads, masks_not_grB)
-                prop_sam_less_noise_notB_same_sign = calculate_num_para_A_less_magnitude_than_B_same_sign(sam_grads, noise_grads, masks_not_grB)
-                prop_clean_less_noise_notB_same_sign = calculate_num_para_A_less_magnitude_than_B_same_sign(clean_grads, noise_grads, masks_not_grB)
-                
-                prop_clean_less_sam_same_sign = calculate_num_para_A_less_magnitude_than_B_same_sign(clean_grads, sam_grads, masks_grB)
-                prop_sam_less_noise_same_sign = calculate_num_para_A_less_magnitude_than_B_same_sign(sam_grads, noise_grads, masks_grB)
-                prop_clean_less_noise_same_sign = calculate_num_para_A_less_magnitude_than_B_same_sign(clean_grads, noise_grads, masks_grB)
-                
-                clean_norm = calculate_norm(clean_grads, masks_grB)
-                noise_norm = calculate_norm(noise_grads, masks_grB)
-                total_norm = calculate_norm(total_grads, masks_grB)
+                clean_norm = calculate_norm(clean_grads, masksB)
+                noise_norm = calculate_norm(noise_grads, masksB)
+                total_norm = calculate_norm(total_grads, masksB)
+
+                prop_bad_A = count_overlap_two_mask(masksA, bad_masks)
+                prop_bad_B = count_overlap_two_mask(masksB, bad_masks)
+                prop_bad_C = count_overlap_two_mask(masksC, bad_masks)
                 
                 logging_dict.update({
-                    'prop_clean_less_sam': prop_clean_less_sam,
-                    'prop_sam_less_noise': prop_sam_less_noise,
-                    'prop_clean_less_noise': prop_clean_less_noise,
-                    'prop_clean_less_sam_notB': prop_clean_less_sam_notB,
-                    'prop_sam_less_noise_notB': prop_sam_less_noise_notB,
-                    'prop_clean_less_noise_notB': prop_clean_less_noise_notB,
-                    'prop_clean_less_sam_notB_same_sign': prop_clean_less_sam_notB_same_sign,
-                    'prop_sam_less_noise_notB_same_sign': prop_sam_less_noise_notB_same_sign,
-                    'prop_clean_less_noise_notB_same_sign': prop_clean_less_noise_notB_same_sign,
-                    'prop_clean_less_sam_same_sign': prop_clean_less_sam_same_sign,
-                    'prop_sam_less_noise_same_sign': prop_sam_less_noise_same_sign,
-                    'prop_clean_less_noise_same_sign': prop_clean_less_noise_same_sign,
                     'norm/clean_norm': clean_norm,
                     'norm/noise_norm': noise_norm,
-                    'norm/total_norm': total_norm
+                    'norm/total_norm': total_norm,
+                    'prop_bad_A': prop_bad_A,
+                    'prop_bad_B': prop_bad_B,
+                    'prop_bad_C': prop_bad_C
                 })
             
             optimizer.second_step(zero_grad=True)
