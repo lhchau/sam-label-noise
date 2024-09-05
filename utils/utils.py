@@ -13,6 +13,12 @@ import torch
 import torch.nn as nn
 import torch.nn.init as init
 
+def get_mask_A_less_magnitude_than_B_same_sign(grads_A, grads_B):
+    masks = []
+    for grad_A, grad_B in zip(grads_A, grads_B):
+        masks.append(torch.logical_and(grad_A.abs() < grad_B.abs(), grad_A.mul(grad_B) > 0))
+    return masks
+
 def get_mask_A_less_magnitude_than_B_diff_sign(grads_A, grads_B):
     masks = []
     for grad_A, grad_B in zip(grads_A, grads_B):

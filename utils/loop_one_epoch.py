@@ -80,6 +80,7 @@ def loop_one_epoch(
                 logging_dict.update(get_norm(optimizer))
                 
                 bad_masks = get_mask_A_less_magnitude_than_B_diff_sign(clean_grads, noise_grads)
+                good_masks = get_mask_A_less_magnitude_than_B_diff_sign(noise_grads, clean_grads)
                 _, masksA = get_grads_and_masks_at_group(optimizer, gr='A')
                 _, masksB = get_grads_and_masks_at_group(optimizer, gr='B')
                 _, masksC = get_grads_and_masks_at_group(optimizer, gr='C')
@@ -88,17 +89,38 @@ def loop_one_epoch(
                 noise_norm = calculate_norm(noise_grads, masksB)
                 total_norm = calculate_norm(total_grads, masksB)
 
-                prop_bad_A = count_overlap_two_mask(masksA, bad_masks)
-                prop_bad_B = count_overlap_two_mask(masksB, bad_masks)
-                prop_bad_C = count_overlap_two_mask(masksC, bad_masks)
+                prop_A_over_bad = count_overlap_two_mask(masksA, bad_masks)
+                prop_B_over_bad = count_overlap_two_mask(masksB, bad_masks)
+                prop_C_over_bad = count_overlap_two_mask(masksC, bad_masks)
+                
+                prop_bad_over_A = count_overlap_two_mask(bad_masks, masksA)
+                prop_bad_over_B = count_overlap_two_mask(bad_masks, masksB)
+                prop_bad_over_C = count_overlap_two_mask(bad_masks, masksC)
+                
+                prop_good_over_A = count_overlap_two_mask(good_masks, masksA)
+                prop_good_over_B = count_overlap_two_mask(good_masks, masksB)
+                prop_good_over_C = count_overlap_two_mask(good_masks, masksC)
+                
+                prop_A_over_good = count_overlap_two_mask(masksA, good_masks)
+                prop_B_over_good = count_overlap_two_mask(masksB, good_masks)
+                prop_C_over_good = count_overlap_two_mask(masksC, good_masks)
                 
                 logging_dict.update({
                     'norm/clean_norm': clean_norm,
                     'norm/noise_norm': noise_norm,
                     'norm/total_norm': total_norm,
-                    'prop_bad_A': prop_bad_A,
-                    'prop_bad_B': prop_bad_B,
-                    'prop_bad_C': prop_bad_C
+                    'prop/prop_A_over_bad': prop_A_over_bad,
+                    'prop/prop_B_over_bad': prop_B_over_bad,
+                    'prop/prop_C_over_bad': prop_C_over_bad,
+                    'prop/prop_bad_over_A': prop_bad_over_A,
+                    'prop/prop_bad_over_B': prop_bad_over_B,
+                    'prop/prop_bad_over_C': prop_bad_over_C,
+                    'prop/prop_good_over_A': prop_good_over_A,
+                    'prop/prop_good_over_B': prop_good_over_B,
+                    'prop/prop_good_over_C': prop_good_over_C,
+                    'prop/prop_A_over_good': prop_A_over_good,
+                    'prop/prop_B_over_good': prop_B_over_good,
+                    'prop/prop_C_over_good': prop_C_over_good
                 })
             
             optimizer.second_step(zero_grad=True)
