@@ -35,6 +35,7 @@ pprint.pprint(cfg)
 
 resume = cfg['trainer'].get('resume', None)
 alpha_scheduler = cfg['trainer'].get('alpha_scheduler', None)
+patience = cfg['trainer'].get('patience', 20)
 ################################
 #### 1. BUILD THE DATASET
 ################################
@@ -64,7 +65,7 @@ criterion = nn.CrossEntropyLoss()
 opt_name = cfg['optimizer'].pop('opt_name', None)
 optimizer = get_optimizer(net, opt_name, cfg['optimizer'])
 scheduler = torch.optim.lr_scheduler.MultiStepLR(optimizer, milestones=[int(EPOCHS * 0.5), int(EPOCHS * 0.75)])
-early_stopping = EarlyStopping(patience=20)
+early_stopping = EarlyStopping(patience=patience)
 
 ################################
 #### 3.b Training 
