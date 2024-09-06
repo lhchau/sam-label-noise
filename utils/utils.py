@@ -96,7 +96,7 @@ def get_gradients(optimizer):
             grads.append(p.grad.clone())
     return grads
 
-def get_grads_and_masks_at_group(optimizer, gr='B'):
+def get_grads_and_masks_at_group(optimizer, gr='B', alpha=1):
     grads, masks = [], []
     for group in optimizer.param_groups:
         for p in group["params"]:
@@ -106,9 +106,9 @@ def get_grads_and_masks_at_group(optimizer, gr='B'):
             ratio = p.grad.div(param_state['first_grad'].add(1e-8))
             
             if gr == 'A':
-                mask = ratio > 1
+                mask = ratio > alpha
             elif gr == 'B':
-                mask = torch.logical_and(ratio < 1, ratio > 0)
+                mask = torch.logical_and(ratio < alpha, ratio > 0)
             else:
                 mask = ratio <= 0
             masks.append(mask)
