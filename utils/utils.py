@@ -13,6 +13,15 @@ import torch
 import torch.nn as nn
 import torch.nn.init as init
 
+def get_mask_A_B_same_or_diff_sign(grads_A, grads_B, sign='same'):
+    masks = []
+    for grad_A, grad_B in zip(grads_A, grads_B):
+        if sign == 'same':
+            mask = grad_A.mul(grad_B) > 0
+        else: mask = grad_A.mul(grad_B) < 0
+        masks.append(mask)
+    return masks
+
 def get_mask_A_less_magnitude_than_B_same_sign(grads_A, grads_B):
     masks = []
     for grad_A, grad_B in zip(grads_A, grads_B):
