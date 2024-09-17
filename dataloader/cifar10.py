@@ -13,10 +13,11 @@ class CIFAR10Noisy(torchvision.datasets.CIFAR10):
     def __init__(self, root, train=True, noise_type='symmetric', transform=None, target_transform=None, download=False, noise_rate=0.2, data_size=1):
         super(CIFAR10Noisy, self).__init__(root, train=train, transform=transform, target_transform=target_transform, download=download)
         self.noise_rate = noise_rate
-        self.noisy_labels = self.targets.copy()  # Copy the original labels
         self.num_classes = len(self.classes)
         
-        self.data, self.target = self._get_smaller_dataset(data_size)
+        self.data, self.targets = self.get_smaller_dataset(data_size)
+        
+        self.noisy_labels = self.targets.copy()  # Copy the original labels
         
         if noise_type == 'dependent':
             self.noise_label_gen = DependentLabelGenerator(self.num_classes, 32 * 32 * 3, transform) 
@@ -25,7 +26,7 @@ class CIFAR10Noisy(torchvision.datasets.CIFAR10):
         if self.train:
             self._apply_noise(noise_type)
 
-    def _get_smaller_dataset(self, data_size):
+    def get_smaller_dataset(self, data_size):
         if data_size == 1:
             return self.data, self.targets  # return full dataset if data_size is 100%
 
