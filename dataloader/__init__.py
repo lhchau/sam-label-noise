@@ -10,13 +10,14 @@ def get_dataloader(
     noise=0.25,
     noise_type='symmetric',
     resize_image=224,
-    data_augmentation="standard"
+    data_augmentation="standard",
+    data_size=1,
 ):
     print('==> Preparing data..')
 
     if data_name == "cifar100":
-        return get_cifar100(batch_size, num_workers, noise, noise_type, data_augmentation)
+        return get_cifar100(batch_size, num_workers, noise, noise_type, data_augmentation, data_size=data_size)
     elif data_name == "cifar10":
-        return get_cifar10(batch_size, num_workers, noise, noise_type, data_augmentation)
+        return get_cifar10(batch_size, num_workers, noise, noise_type, data_augmentation, data_size=data_size)
     elif data_name == "miniwebvision":
         return get_miniwebvision(batch_size, num_workers, resize_image)
