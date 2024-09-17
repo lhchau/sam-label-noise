@@ -27,7 +27,7 @@ class CIFAR10Noisy(torchvision.datasets.CIFAR10):
 
     def _get_smaller_dataset(self, data_size):
         if data_size == 1:
-            return self.data, self.target  # return full dataset if data_size is 100%
+            return self.data, self.targets  # return full dataset if data_size is 100%
 
         if not (0 < data_size <= 1):
             raise ValueError("data_size should be a float between 0 and 1")
@@ -35,9 +35,9 @@ class CIFAR10Noisy(torchvision.datasets.CIFAR10):
         # Use train_test_split to get a subset of the data, stratify ensures class balance
         X_small, _, y_small, _ = train_test_split(
             self.data, 
-            self.target, 
+            self.targets, 
             train_size=data_size, 
-            stratify=self.target,  # Ensures each class is proportionally represented
+            stratify=self.targets,  # Ensures each class is proportionally represented
             random_state=42  # Ensure reproducibility
         )
 
