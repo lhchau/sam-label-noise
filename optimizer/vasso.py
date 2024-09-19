@@ -1,25 +1,36 @@
 import torch
 
 
-class SAMENABS(torch.optim.Optimizer):
-    def __init__(self, params, rho=0.05, adaptive=False, group="B", condition=1, **kwargs):
+class VASSO(torch.optim.Optimizer):
+    def __init__(self, params, rho=0.05, theta=0.2, adaptive=False, **kwargs):
         assert rho >= 0.0, f"Invalid rho, should be non-negative: {rho}"
 
         defaults = dict(rho=rho, adaptive=adaptive, **kwargs)
-        super(SAMENABS, self).__init__(params, defaults)
-        self.group = group
-        self.condition = condition
+        super(VASSO, self).__init__(params, defaults)
+        
+        self.theta = theta
         
     @torch.no_grad()
     def first_step(self, zero_grad=False):   
-        self.first_grad_norm = self._grad_norm()
+        for group in self.param_groups:
+            for p in group["params"]:
+                if p.grad is None: continue
+                param_state = self.state[p]
+
+                if 'ema' not in self.state[p]:
+                    param_state['ema'] = p.grad.clone().detach()
+                else:
+                    param_state['ema'].mul_(1 - self.theta)
+                    param_state['ema'].add_(p.grad, alpha=self.theta)
+        
+        self.first_grad_norm = self._grad_norm('ema')
         for group in self.param_groups:
             scale = group['rho'] / (self.first_grad_norm + 1e-12)
             for p in group['params']:
                 if p.grad is None: continue
                 param_state = self.state[p]
                 
-                e_w = (torch.pow(p, 2) if group["adaptive"] else 1.0) * p.grad * scale
+                e_w = (torch.pow(p, 2) if group["adaptive"] else 1.0) * param_state['ema'] * scale
                 p.add_(e_w)  # climb to the local maximum "w + e(w)"
                 
                 param_state['first_grad'] = p.grad.clone()
@@ -37,13 +48,7 @@ class SAMENABS(torch.optim.Optimizer):
                 param_state = self.state[p]
                 p.sub_(param_state['e_w'])  # get back to "w" from "w + e(w)"
                 
-                ratio = (p.grad.div(param_state['first_grad'].add(1e-8))).abs()
-                if self.group == "A":
-                    mask = ratio >= 1
-                elif self.group == "B":
-                    mask = ratio < 1
-                
-                d_p = p.grad.mul(mask).mul(self.condition) + p.grad.mul(torch.logical_not(mask))
+                d_p = p.grad.data
                 if weight_decay != 0:
                     d_p.add_(p.data, alpha=weight_decay)
                     

@@ -2,18 +2,13 @@ from torch.optim import SGD
 from .sam import SAM
 from .samonly import SAMONLY
 from .samwo import SAMWO
-from .samen import SAMEN
-from .gsamv2 import GSAMV2
-from .powersamean import POWERSAMEAN
-from .samenabs import SAMENABS
-from .samenbc import SAMENBC
-from .samenice import SAMENICE
-from .samwoexplore import SAMWOEXPLORE
-from .samlotteryticket import SAMLOTTERYTICKET
-from .normsamean import NORMSAMEAN
-from .normsam import NORMSAM
-from .warmupsamean import WARMUPSAMEAN
 from .schedulersamean import SCHEDULERSAMEAN
+from .fsam import FriendlySAM
+from .fsamean import FriendlySAMEAN
+from .vasso import VASSO
+from .vassosamean import VASSOSAMEAN
+from .gsam import GSAM
+from .gsamean import GSAMEAN
 
 def get_optimizer(
     net,
@@ -27,29 +22,19 @@ def get_optimizer(
         return SAMONLY(net.parameters(), **opt_hyperpara)
     elif opt_name == 'samwo':
         return SAMWO(net.parameters(), **opt_hyperpara)
-    elif opt_name == 'samen':
-        return SAMEN(net.parameters(), **opt_hyperpara)
-    elif opt_name == 'gsamv2':
-        return GSAMV2(net.parameters(), **opt_hyperpara)
-    elif opt_name == 'powersamean':
-        return POWERSAMEAN(net.parameters(), **opt_hyperpara)
-    elif opt_name == 'samenabs':
-        return SAMENABS(net.parameters(), **opt_hyperpara)
-    elif opt_name == 'samenbc':
-        return SAMENBC(net.parameters(), **opt_hyperpara)
-    elif opt_name == 'samenice':
-        return SAMENICE(net.parameters(), **opt_hyperpara)
-    elif opt_name == 'samwoexplore':
-        return SAMWOEXPLORE(net.parameters(), **opt_hyperpara)
-    elif opt_name == 'samlotteryticket':
-        return SAMLOTTERYTICKET(net.parameters(), **opt_hyperpara)
-    elif opt_name == 'normsamean':
-        return NORMSAMEAN(net.parameters(), **opt_hyperpara)
-    elif opt_name == 'normsam':
-        return NORMSAM(net.parameters(), **opt_hyperpara)
-    elif opt_name == 'warmupsamean':
-        return WARMUPSAMEAN(net.parameters(), **opt_hyperpara)
     elif opt_name == 'schedulersamean':
         return SCHEDULERSAMEAN(net.parameters(), **opt_hyperpara)
+    elif opt_name == 'fsam':
+        return FriendlySAM(net.parameters(), **opt_hyperpara)
+    elif opt_name == 'fsamean':
+        return FriendlySAMEAN(net.parameters(), **opt_hyperpara)
+    elif opt_name == 'vasso':
+        return VASSO(net.parameters(), **opt_hyperpara)
+    elif opt_name == 'vassosamean':
+        return VASSOSAMEAN(net.parameters(), **opt_hyperpara)
+    elif opt_name == 'gsam':
+        return GSAM(net.parameters(), **opt_hyperpara)
+    elif opt_name == 'vassosamean':
+        return GSAMEAN(net.parameters(), **opt_hyperpara)
     else:
         raise ValueError("Invalid optimizer!!!")

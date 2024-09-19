@@ -1,12 +1,13 @@
 import torch
 
 
-class GSAMV2(torch.optim.Optimizer):
-    def __init__(self, params, rho=0.05, alpha=0.5, adaptive=False, **kwargs):
+class GSAM(torch.optim.Optimizer):
+    def __init__(self, params, rho=0.05, adaptive=False, alpha=0.01, **kwargs):
         assert rho >= 0.0, f"Invalid rho, should be non-negative: {rho}"
 
         defaults = dict(rho=rho, adaptive=adaptive, **kwargs)
-        super(GSAMV2, self).__init__(params, defaults)
+        super(GSAM, self).__init__(params, defaults)
+        
         self.alpha = alpha
         
     @torch.no_grad()
@@ -27,35 +28,30 @@ class GSAMV2(torch.optim.Optimizer):
 
     @torch.no_grad()
     def second_step(self, zero_grad=False):
+        # calculate inner product
         inner_prod = 0.0
         for group in self.param_groups:
             for p in group['params']:
                 if p.grad is None: continue
-                param_state = self.state[p]
                 inner_prod += torch.sum(
-                    param_state['first_grad'] * p.grad.data
+                    self.state[p]['first_grad'] * p.grad.data
                 )
 
+        # get norm
         new_grad_norm = self._grad_norm()
         old_grad_norm = self.first_grad_norm
 
-        cosine = inner_prod / (new_grad_norm * old_grad_norm + 1e-8)
-        
-        for group in self.param_groups:
-            weight_decay = group["weight_decay"]
-            step_size = group['lr']
-            momentum = group['momentum']
-            for p in group['params']:
-                if p.grad is None: continue
-                param_state = self.state[p]
-                p.sub_(param_state['e_w'])  # get back to "w" from "w + e(w)"
-                
-                parallel = cosine * old_grad_norm * param_state['first_grad'] / (old_grad_norm + 1e-8)
-                vertical = p.grad - parallel
-                
-                p.grad = vertical + parallel.mul(self.alpha)
+        # get cosine
+        cosine = inner_prod / (new_grad_norm * old_grad_norm + 1e-12)
 
-        d_t_norm = self._grad_norm()
+        # gradient decomposition
+        for group in self.param_groups:
+            for p in group['params']:
+                if p.grad is None: continue
+                vertical = self.state[p]['first_grad'] - cosine * old_grad_norm * p.grad.data / (new_grad_norm + 1e-12)
+                p.grad.data.add_( vertical, alpha=-self.alpha)
+                
+                
         for group in self.param_groups:
             weight_decay = group["weight_decay"]
             step_size = group['lr']
@@ -65,7 +61,7 @@ class GSAMV2(torch.optim.Optimizer):
                 param_state = self.state[p]
                 p.sub_(param_state['e_w'])  # get back to "w" from "w + e(w)"
                 
-                d_p = p.grad.mul(new_grad_norm/d_t_norm)
+                d_p = p.grad.data
                 if weight_decay != 0:
                     d_p.add_(p.data, alpha=weight_decay)
                     

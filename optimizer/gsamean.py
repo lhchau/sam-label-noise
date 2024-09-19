@@ -1,13 +1,15 @@
 import torch
 
 
-class SAMLOTTERYTICKET(torch.optim.Optimizer):
-    def __init__(self, params, rho=0.05, adaptive=False, percentage=0.2, condition=1, **kwargs):
+class GSAMEAN(torch.optim.Optimizer):
+    def __init__(self, params, rho=0.05, adaptive=False, alpha=0.01, group="B", condition=1, **kwargs):
         assert rho >= 0.0, f"Invalid rho, should be non-negative: {rho}"
 
         defaults = dict(rho=rho, adaptive=adaptive, **kwargs)
-        super(SAMLOTTERYTICKET, self).__init__(params, defaults)
-        self.percentage = percentage
+        super(GSAMEAN, self).__init__(params, defaults)
+        
+        self.alpha = alpha
+        self.group = group
         self.condition = condition
         
     @torch.no_grad()
@@ -28,27 +30,47 @@ class SAMLOTTERYTICKET(torch.optim.Optimizer):
 
     @torch.no_grad()
     def second_step(self, zero_grad=False):
-        all_ratios = []
+        # calculate inner product
+        inner_prod = 0.0
         for group in self.param_groups:
             for p in group['params']:
                 if p.grad is None: continue
-                param_state = self.state[p]
-                all_ratios.append(p.grad.div(param_state['first_grad'].add(1e-8)))
-        cat_all_ratios = torch.cat([ratio.flatten() for ratio in all_ratios])
-        threshold = torch.quantile(cat_all_ratios, 1 - self.percentage)
-        
+                inner_prod += torch.sum(
+                    self.state[p]['first_grad'] * p.grad.data
+                )
+
+        # get norm
+        new_grad_norm = self._grad_norm()
+        old_grad_norm = self.first_grad_norm
+
+        # get cosine
+        cosine = inner_prod / (new_grad_norm * old_grad_norm + 1e-12)
+
+        # gradient decomposition
+        for group in self.param_groups:
+            for p in group['params']:
+                if p.grad is None: continue
+                vertical = self.state[p]['first_grad'] - cosine * old_grad_norm * p.grad.data / (new_grad_norm + 1e-12)
+                p.grad.data.add_( vertical, alpha=-self.alpha)
+                
         for group in self.param_groups:
             weight_decay = group["weight_decay"]
             step_size = group['lr']
             momentum = group['momentum']
-            for p, ratio in zip(group['params'], all_ratios):
+            for p in group['params']:
                 if p.grad is None: continue
                 param_state = self.state[p]
                 p.sub_(param_state['e_w'])  # get back to "w" from "w + e(w)"
                 
-                mask = ratio > threshold
+                ratio = p.grad.div(param_state['first_grad'].add(1e-8))
+                if self.group == "A":
+                    mask = ratio > 1
+                elif self.group == "B":
+                    mask = torch.logical_and(ratio > 0, ratio < 1)
+                elif self.group == "C":
+                    mask = ratio < 0
                 
-                d_p = p.grad.mul(mask) + p.grad.mul(torch.logical_not(mask)).mul(self.condition)
+                d_p = p.grad.mul(mask).mul(self.condition) + p.grad.mul(torch.logical_not(mask))
                 if weight_decay != 0:
                     d_p.add_(p.data, alpha=weight_decay)
                     
@@ -58,7 +80,7 @@ class SAMLOTTERYTICKET(torch.optim.Optimizer):
                 
                 p.add_(param_state['exp_avg'], alpha=-step_size)
         if zero_grad: self.zero_grad()
-
+        
     @torch.no_grad()
     def step(self, closure=None):
         assert closure is not None, "Sharpness Aware Minimization requires closure, but it was not provided"
@@ -108,3 +130,6 @@ class SAMLOTTERYTICKET(torch.optim.Optimizer):
     def load_state_dict(self, state_dict):
         super().load_state_dict(state_dict)
         self.base_optimizer.param_groups = self.param_groups
+
+    def set_alpha(self, alpha):
+        self.condition = alpha
