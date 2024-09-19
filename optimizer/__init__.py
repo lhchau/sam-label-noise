@@ -34,7 +34,7 @@ def get_optimizer(
         return VASSOSAMEAN(net.parameters(), **opt_hyperpara)
     elif opt_name == 'gsam':
         return GSAM(net.parameters(), **opt_hyperpara)
-    elif opt_name == 'vassosamean':
+    elif opt_name == 'gsamean':
         return GSAMEAN(net.parameters(), **opt_hyperpara)
     else:
         raise ValueError("Invalid optimizer!!!")
