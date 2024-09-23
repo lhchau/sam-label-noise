@@ -1,6 +1,7 @@
 from .cifar100 import get_cifar100
 from .cifar10 import get_cifar10
 from .miniwebsion import get_miniwebvision
+from .animal10n import get_animal10n
 
 # Data
 def get_dataloader(
@@ -21,3 +22,5 @@ def get_dataloader(
         return get_cifar10(batch_size, num_workers, noise, noise_type, data_augmentation, data_size=data_size)
     elif data_name == "miniwebvision":
         return get_miniwebvision(batch_size, num_workers, resize_image)
+    elif data_name == "animal10n":
+        return get_animal10n(batch_size, num_workers)
