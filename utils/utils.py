@@ -58,11 +58,8 @@ def get_checkpoint(optimizer, stored_info=[]):
         epoch = stored_info[0]
         with open(f'./stored/ratios_epoch{epoch}.pkl', 'wb') as f:
             pickle.dump(ratios, f)
-    return {
-        'num_para_a': (num_para_a / total_para) * 100,
-        'num_para_b': (num_para_b / total_para) * 100,
-        'num_para_c': (num_para_c / total_para) * 100
-    }
+    return  (num_para_a / total_para) * 100, (num_para_b / total_para) * 100, (num_para_c / total_para) * 100
+
     
 
 def get_logging_name(cfg):
