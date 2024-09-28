@@ -25,7 +25,6 @@ def loop_one_epoch(
     noise_total = 0
     noise_correct = 0
     noise_acc, clean_acc = 0, 0
-    grA, grB, grC = [], [], []
     if loop_type == 'train': 
         net.train()
         for batch_idx, batch in enumerate(dataloader):
@@ -53,11 +52,8 @@ def loop_one_epoch(
                 disable_running_stats(net)  # <- this is the important line
                 criterion(net(inputs), targets).backward()
                 
-                num_para_a, num_para_b, num_para_c = get_checkpoint(optimizer)
-                grA.append(num_para_a.item())
-                grB.append(num_para_b.item())
-                grC.append(num_para_c.item())
                 if (batch_idx + 1) % len(dataloader) == 0:
+                    logging_dict.update(get_checkpoint(optimizer))
                     logging_dict.update(get_norm(optimizer))
                 
                 optimizer.second_step(zero_grad=True)
@@ -87,9 +83,6 @@ def loop_one_epoch(
                     clean_acc = 100.*clean_correct/clean_total
                     
                     progress_bar(batch_idx, len(dataloader), 'Loss: %.3f | Acc: %.3f%% (%d/%d) | Noise: %.3f%% (%d/%d) | Clean: %.3f%% (%d/%d)'% (loss_mean, acc, correct, total, noise_acc, noise_correct, noise_total, clean_acc, clean_correct, clean_total))
-        logging_dict[f'{loop_type.title()}/num_para_a'] = np.mean(grA)
-        logging_dict[f'{loop_type.title()}/num_para_b'] = np.mean(grB)
-        logging_dict[f'{loop_type.title()}/num_para_c'] = np.mean(grC)
         logging_dict[f'{loop_type.title()}/noise_acc'] = noise_acc
         logging_dict[f'{loop_type.title()}/clean_acc'] = clean_acc
         logging_dict[f'{loop_type.title()}/gap_clean_noise_acc'] = clean_acc - noise_acc

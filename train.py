@@ -112,18 +112,18 @@ if __name__ == "__main__":
             if early_stopping.early_stop:
                 break
             
-    # if framework_name == 'wandb':
-    #     wandb.log(logging_dict)
+    if framework_name == 'wandb':
+        wandb.log(logging_dict)
         
-    #     mini_hessian_batch_size = 128
-    #     cfg['dataloader']['batch_size'] = mini_hessian_batch_size
-    #     train_dataloader, _, _ = get_dataloader(**cfg['dataloader'])
-    #     figure = get_eigen_hessian_plot(
-    #         name=logging_name, 
-    #         net=net,
-    #         criterion=criterion,
-    #         dataloader=train_dataloader,
-    #         hessian_batch_size=128*20,
-    #         mini_hessian_batch_size=mini_hessian_batch_size
-    #     )
-    #     wandb.log({'train/top5_eigenvalue_density': wandb.Image(figure)})
+        mini_hessian_batch_size = 128
+        cfg['dataloader']['batch_size'] = mini_hessian_batch_size
+        train_dataloader, _, _ = get_dataloader(**cfg['dataloader'])
+        figure = get_eigen_hessian_plot(
+            name=logging_name, 
+            net=net,
+            criterion=criterion,
+            dataloader=train_dataloader,
+            hessian_batch_size=128*20,
+            mini_hessian_batch_size=mini_hessian_batch_size
+        )
+        wandb.log({'train/top5_eigenvalue_density': wandb.Image(figure)})
