@@ -44,7 +44,7 @@ def loop_one_epoch(
             enable_running_stats(net)  # <- this is the important line
             outputs = net(inputs)
             
-            if (batch_idx + 1) % 5 == 0:
+            if (batch_idx + 1) % 3 == 0:
                 clean_outputs = outputs[torch.logical_not(noise_masks)]
                 clean_targets = targets[torch.logical_not(noise_masks)]
                 
