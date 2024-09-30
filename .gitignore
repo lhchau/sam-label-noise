@@ -5,6 +5,7 @@ data/cifar-100-python.tar.gz
 data/train/*
 data/val/*
 data/tiny-imagenet-200/*
+data/Animal-10N
 checkpoint
 __pycache__
 wandb
