@@ -35,7 +35,7 @@ pprint.pprint(cfg)
 
 resume = cfg['trainer'].get('resume', None)
 alpha_scheduler = cfg['trainer'].get('alpha_scheduler', None)
-patience = cfg['trainer'].get('patience', 20)
+patience = cfg['trainer'].get('patience', 10)
 scheduler = cfg['trainer'].get('scheduler', None)
 ################################
 #### 1. BUILD THE DATASET
