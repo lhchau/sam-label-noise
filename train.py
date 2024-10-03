@@ -67,6 +67,8 @@ opt_name = cfg['optimizer'].pop('opt_name', None)
 optimizer = get_optimizer(net, opt_name, cfg['optimizer'])
 if scheduler == 'cosine':
     scheduler = torch.optim.lr_scheduler.CosineAnnealingLR(optimizer, T_max=EPOCHS)
+elif scheduler == 'tiny_imagenet':
+    scheduler = torch.optim.lr_scheduler.MultiStepLR(optimizer, milestones=[40, 80])
 else:
     scheduler = torch.optim.lr_scheduler.MultiStepLR(optimizer, milestones=[int(EPOCHS * 0.5), int(EPOCHS * 0.75)])
 early_stopping = EarlyStopping(patience=patience)
