@@ -37,10 +37,14 @@ resume = cfg['trainer'].get('resume', None)
 alpha_scheduler = cfg['trainer'].get('alpha_scheduler', None)
 patience = cfg['trainer'].get('patience', 10)
 scheduler = cfg['trainer'].get('scheduler', None)
+use_val = cfg['dataloader'].get('use_val', False)
 ################################
 #### 1. BUILD THE DATASET
 ################################
-train_dataloader, test_dataloader, num_classes = get_dataloader(**cfg['dataloader'])
+if use_val:
+    train_dataloader, val_dataloader, test_dataloader, num_classes = get_dataloader(**cfg['dataloader'])
+else:
+    train_dataloader, test_dataloader, num_classes = get_dataloader(**cfg['dataloader'])
 
 ################################
 #### 2. BUILD THE NEURAL NETWORK
@@ -95,24 +99,35 @@ if __name__ == "__main__":
             loop_type='train',
             logging_name=logging_name)
         best_acc, acc = loop_one_epoch(
-            dataloader=test_dataloader,
+            dataloader=val_dataloader,
             net=net,
             criterion=criterion,
             optimizer=optimizer,
             device=device,
             logging_dict=logging_dict,
             epoch=epoch,
-            loop_type='test',
+            loop_type='val',
             logging_name=logging_name,
             best_acc=best_acc)
         scheduler.step()
-        
         if framework_name == 'wandb':
             wandb.log(logging_dict)
-        if (epoch + 1) > 100:
-            early_stopping(acc)
-            if early_stopping.early_stop:
-                break
+    loop_one_epoch(
+        dataloader=test_dataloader,
+        net=net,
+        criterion=criterion,
+        optimizer=optimizer,
+        device=device,
+        logging_dict=logging_dict,
+        epoch=None,
+        loop_type='test',
+        logging_name=logging_name)
+    if framework_name == 'wandb':
+        wandb.log(logging_dict)
+        # if (epoch + 1) > 100:
+        #     early_stopping(acc)
+        #     if early_stopping.early_stop:
+        #         break
             
     # if framework_name == 'wandb':
     #     wandb.log(logging_dict)

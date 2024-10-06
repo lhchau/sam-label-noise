@@ -86,11 +86,12 @@ def loop_one_epoch(
         logging_dict[f'{loop_type.title()}/noise_acc'] = noise_acc
         logging_dict[f'{loop_type.title()}/clean_acc'] = clean_acc
         logging_dict[f'{loop_type.title()}/gap_clean_noise_acc'] = clean_acc - noise_acc
-    else:
+    elif loop_type == 'val':
         net.eval()
         with torch.no_grad():
-            for batch_idx, (inputs, targets) in enumerate(dataloader):
-                inputs, targets = inputs.to(device), targets.to(device)
+            for batch_idx, batch in enumerate(dataloader):
+                inputs, targets, noise_masks = batch
+                inputs, targets, noise_masks = inputs.to(device), targets.to(device), noise_masks.to(device)
                 
                 outputs = net(inputs)
                 first_loss = criterion(outputs, targets)
@@ -118,9 +119,33 @@ def loop_one_epoch(
                 best_acc = acc
             logging_dict[f'{loop_type.title()}/best_acc'] = best_acc
         logging_dict[f'{loop_type.title()}/gen_gap'] = logging_dict['Train/acc'] - acc
+    else:
+        # Load checkpoint.
+        print('==> Resuming from best checkpoint..')
+        assert os.path.isdir('checkpoint'), 'Error: no checkpoint directory found!'
+        save_path = os.path.join('checkpoint', logging_name)
+        checkpoint = torch.load(os.path.join(save_path, 'ckpt_best.pth'))
+        net.load_state_dict(checkpoint['net'])
+        net.eval()
+        with torch.no_grad():
+            for batch_idx, (inputs, targets) in enumerate(dataloader):
+                inputs, targets = inputs.to(device), targets.to(device)
+                
+                outputs = net(inputs)
+                first_loss = criterion(outputs, targets)
+
+                loss += first_loss.item()
+                _, predicted = outputs.max(1)
+                total += targets.size(0)
+                correct += predicted.eq(targets).sum().item()
+
+                loss_mean = loss/(batch_idx+1)
+                acc = 100.*correct/total
+
+                progress_bar(batch_idx, len(dataloader), 'Loss: %.3f | Acc: %.3f%% (%d/%d)'% (loss_mean, acc, correct, total))
                 
     logging_dict[f'{loop_type.title()}/loss'] = loss_mean
     logging_dict[f'{loop_type.title()}/acc'] = acc
 
-    if loop_type == 'test': 
+    if loop_type == 'val': 
         return best_acc, acc

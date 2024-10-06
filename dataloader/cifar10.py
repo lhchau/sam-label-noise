@@ -7,6 +7,7 @@ from PIL import Image
 from .cutout import Cutout
 from .tools import DependentLabelGenerator
 from sklearn.model_selection import train_test_split
+from torch.utils.data import random_split
 
 
 class CIFAR10Noisy(torchvision.datasets.CIFAR10):
@@ -100,8 +101,9 @@ def get_cifar10(
     num_workers=4,
     noise=0.25,
     noise_type='symmetric',
-    data_augmentation="standard",
-    data_size=1):
+    data_augmentation="standard", 
+    data_size=1,
+    use_val=False):
     if data_augmentation == "standard":
         transform_train = transforms.Compose([
             transforms.RandomHorizontalFlip(),
@@ -115,16 +117,31 @@ def get_cifar10(
             transforms.ToTensor(),
             transforms.Normalize((0.4914, 0.4822, 0.4465), (0.2023, 0.1994, 0.2010)),
         ])
-        
+
     transform_test = transforms.Compose([
         transforms.ToTensor(),
         transforms.Normalize((0.4914, 0.4822, 0.4465), (0.2023, 0.1994, 0.2010)),
     ])
     
-    data_train = CIFAR10Noisy(root='./data', train=True, download=True, transform=transform_train, noise_rate=noise, noise_type=noise_type, data_size=data_size)
-    data_test = torchvision.datasets.CIFAR10(root='./data', train=False, download=True, transform=transform_test)
-    
-    train_dataloader = torch.utils.data.DataLoader(data_train, batch_size=batch_size, shuffle=True, num_workers=num_workers, pin_memory=True, drop_last=True)
-    test_dataloader = torch.utils.data.DataLoader(data_test, batch_size=1000, shuffle=False, num_workers=4, pin_memory=True)
-    
-    return train_dataloader, test_dataloader, len(data_test.classes)
+    if use_val:
+        data_train = CIFAR10Noisy(root='./data', train=True, download=True, transform=transform_train, noise_rate=noise, noise_type=noise_type, data_size=data_size)
+        
+        train_size = int(0.9 * len(data_train))
+        val_size = len(data_train) - train_size
+        data_train, data_val = random_split(data_train, [train_size, val_size])
+        
+        data_test = torchvision.datasets.CIFAR10(root='./data', train=False, download=True, transform=transform_test)
+        
+        train_dataloader = torch.utils.data.DataLoader(data_train, batch_size=batch_size, shuffle=True, num_workers=num_workers, pin_memory=True, drop_last=True)
+        val_dataloader = torch.utils.data.DataLoader(data_val, batch_size=100, shuffle=False, num_workers=4, pin_memory=True)
+        test_dataloader = torch.utils.data.DataLoader(data_test, batch_size=100, shuffle=False, num_workers=4, pin_memory=True)
+        
+        return train_dataloader, val_dataloader, test_dataloader, len(data_test.classes)
+    else:
+        data_train = CIFAR10Noisy(root='./data', train=True, download=True, transform=transform_train, noise_rate=noise, noise_type=noise_type, data_size=data_size)
+        data_test = torchvision.datasets.CIFAR10(root='./data', train=False, download=True, transform=transform_test)
+        
+        train_dataloader = torch.utils.data.DataLoader(data_train, batch_size=batch_size, shuffle=True, num_workers=num_workers, pin_memory=True, drop_last=True)
+        test_dataloader = torch.utils.data.DataLoader(data_test, batch_size=1000, shuffle=False, num_workers=4, pin_memory=True)
+        
+        return train_dataloader, test_dataloader, len(data_test.classes)
