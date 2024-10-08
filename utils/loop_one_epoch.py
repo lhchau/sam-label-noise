@@ -59,7 +59,7 @@ def loop_one_epoch(
                 optimizer.second_step(zero_grad=True)
                 
             with torch.no_grad():
-                loss += first_loss.item()
+                loss += float(first_loss.item())
                 loss_mean = loss/(batch_idx+1)
                 _, predicted = outputs.max(1)
                 
@@ -86,17 +86,17 @@ def loop_one_epoch(
         logging_dict[f'{loop_type.title()}/noise_acc'] = noise_acc
         logging_dict[f'{loop_type.title()}/clean_acc'] = clean_acc
         logging_dict[f'{loop_type.title()}/gap_clean_noise_acc'] = clean_acc - noise_acc
-    elif loop_type == 'val':
+    elif loop_type == 'test':
         net.eval()
         with torch.no_grad():
             for batch_idx, batch in enumerate(dataloader):
-                inputs, targets, noise_masks = batch
-                inputs, targets, noise_masks = inputs.to(device), targets.to(device), noise_masks.to(device)
+                inputs, targets = batch
+                inputs, targets = inputs.to(device), targets.to(device)
                 
                 outputs = net(inputs)
                 first_loss = criterion(outputs, targets)
 
-                loss += first_loss.item()
+                loss += float(first_loss.item())
                 _, predicted = outputs.max(1)
                 total += targets.size(0)
                 correct += predicted.eq(targets).sum().item()
@@ -134,7 +134,7 @@ def loop_one_epoch(
                 outputs = net(inputs)
                 first_loss = criterion(outputs, targets)
 
-                loss += first_loss.item()
+                loss += float(first_loss.item())
                 _, predicted = outputs.max(1)
                 total += targets.size(0)
                 correct += predicted.eq(targets).sum().item()
@@ -147,5 +147,5 @@ def loop_one_epoch(
     logging_dict[f'{loop_type.title()}/loss'] = loss_mean
     logging_dict[f'{loop_type.title()}/acc'] = acc
 
-    if loop_type == 'val': 
+    if loop_type == 'test': 
         return best_acc, acc

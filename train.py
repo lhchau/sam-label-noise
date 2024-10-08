@@ -35,7 +35,7 @@ pprint.pprint(cfg)
 
 resume = cfg['trainer'].get('resume', None)
 alpha_scheduler = cfg['trainer'].get('alpha_scheduler', None)
-patience = cfg['trainer'].get('patience', 10)
+patience = cfg['trainer'].get('patience', 20)
 scheduler = cfg['trainer'].get('scheduler', None)
 use_val = cfg['dataloader'].get('use_val', False)
 ################################
@@ -99,35 +99,24 @@ if __name__ == "__main__":
             loop_type='train',
             logging_name=logging_name)
         best_acc, acc = loop_one_epoch(
-            dataloader=val_dataloader,
+            dataloader=test_dataloader,
             net=net,
             criterion=criterion,
             optimizer=optimizer,
             device=device,
             logging_dict=logging_dict,
             epoch=epoch,
-            loop_type='val',
+            loop_type='test',
             logging_name=logging_name,
             best_acc=best_acc)
         scheduler.step()
+        
         if framework_name == 'wandb':
             wandb.log(logging_dict)
-    loop_one_epoch(
-        dataloader=test_dataloader,
-        net=net,
-        criterion=criterion,
-        optimizer=optimizer,
-        device=device,
-        logging_dict=logging_dict,
-        epoch=None,
-        loop_type='test',
-        logging_name=logging_name)
-    if framework_name == 'wandb':
-        wandb.log(logging_dict)
-        # if (epoch + 1) > 100:
-        #     early_stopping(acc)
-        #     if early_stopping.early_stop:
-        #         break
+        if (epoch + 1) > 100:
+            early_stopping(acc)
+            if early_stopping.early_stop:
+                break
             
     # if framework_name == 'wandb':
     #     wandb.log(logging_dict)
