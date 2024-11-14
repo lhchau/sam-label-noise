@@ -35,7 +35,7 @@ pprint.pprint(cfg)
 
 resume = cfg['trainer'].get('resume', None)
 alpha_scheduler = cfg['trainer'].get('alpha_scheduler', None)
-patience = cfg['trainer'].get('patience', 20)
+# patience = cfg['trainer'].get('patience', 20)
 scheduler = cfg['trainer'].get('scheduler', None)
 use_val = cfg['dataloader'].get('use_val', False)
 ################################
@@ -77,7 +77,7 @@ elif scheduler == 'compare':
     scheduler = torch.optim.lr_scheduler.MultiStepLR(optimizer, milestones=[50])
 else:
     scheduler = torch.optim.lr_scheduler.MultiStepLR(optimizer, milestones=[int(EPOCHS * 0.5), int(EPOCHS * 0.75)])
-early_stopping = EarlyStopping(patience=patience)
+# early_stopping = EarlyStopping(patience=patience)
 
 ################################
 #### 3.b Training 
@@ -115,23 +115,7 @@ if __name__ == "__main__":
         
         if framework_name == 'wandb':
             wandb.log(logging_dict)
-        if (epoch + 1) > 100:
-            early_stopping(acc)
-            if early_stopping.early_stop:
-                break
-            
-    # if framework_name == 'wandb':
-    #     wandb.log(logging_dict)
-        
-    #     mini_hessian_batch_size = 128
-    #     cfg['dataloader']['batch_size'] = mini_hessian_batch_size
-    #     train_dataloader, _, _ = get_dataloader(**cfg['dataloader'])
-    #     figure = get_eigen_hessian_plot(
-    #         name=logging_name, 
-    #         net=net,
-    #         criterion=criterion,
-    #         dataloader=train_dataloader,
-    #         hessian_batch_size=128*20,
-    #         mini_hessian_batch_size=mini_hessian_batch_size
-    #     )
-    #     wandb.log({'train/top5_eigenvalue_density': wandb.Image(figure)})
+        # if (epoch + 1) > 100:
+        #     early_stopping(acc)
+        #     if early_stopping.early_stop:
+        #         break
