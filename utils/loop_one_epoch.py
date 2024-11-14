@@ -51,7 +51,7 @@ def loop_one_epoch(
             else:
                 enable_running_stats(net)  # <- this is the important line
                 outputs = net(inputs)
-                if (batch_idx + 1) % 3 == 0:
+                if (batch_idx + 1) % 5 == 0:
                     clean_outputs = outputs[torch.logical_not(noise_masks)]
                     clean_targets = targets[torch.logical_not(noise_masks)]
                     
@@ -77,7 +77,7 @@ def loop_one_epoch(
                 disable_running_stats(net)  # <- this is the important line
                 criterion(net(inputs), targets).backward()
 
-                if (batch_idx + 1) % 3 == 0:
+                if (batch_idx + 1) % 5 == 0:
                     bad_masks = get_mask_A_less_magnitude_than_B_diff_sign(clean_grads, noise_grads)
                     good_masks = get_mask_A_less_magnitude_than_B_diff_sign(noise_grads, clean_grads)
                     _, masksA = get_grads_and_masks_at_group(optimizer, gr='A')
