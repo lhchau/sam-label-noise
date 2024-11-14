@@ -122,7 +122,7 @@ def get_checkpoint(optimizer, stored_info=[]):
 def get_logging_name(cfg):
     logging_name = ''
     
-    logging_name += 'MODEL'
+    logging_name += 'MOD'
     for key, value in cfg['model'].items():
         if isinstance(value, dict):
             for in_key, in_value in value.items():
@@ -144,7 +144,7 @@ def get_logging_name(cfg):
         else:
             logging_name += f'_{key[:2]}={value}'
         
-    logging_name += '_DATA'
+    logging_name += '_DAT'
     for key, value in cfg['dataloader'].items():
         if isinstance(value, dict):
             for in_key, in_value in value.items():

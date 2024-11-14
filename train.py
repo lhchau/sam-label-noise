@@ -24,20 +24,22 @@ best_acc, start_epoch, logging_dict = 0, 0, {}
 # Total number of training epochs
 EPOCHS = cfg['trainer']['epochs'] 
 
-print('==> Initialize Logging Framework..')
-logging_name = get_logging_name(cfg)
-logging_name += ('_' + current_time)
-
-framework_name = cfg['logging']['framework_name']
-if framework_name == 'wandb':
-    wandb.init(project=cfg['logging']['project_name'], name=logging_name, config=cfg)
-pprint.pprint(cfg)
 
 resume = cfg['trainer'].get('resume', None)
 alpha_scheduler = cfg['trainer'].get('alpha_scheduler', None)
 # patience = cfg['trainer'].get('patience', 20)
 scheduler = cfg['trainer'].get('scheduler', None)
 use_val = cfg['dataloader'].get('use_val', False)
+
+print('==> Initialize Logging Framework..')
+logging_name = get_logging_name(cfg)
+logging_name += f'_k={alpha_scheduler}'
+logging_name += ('_' + current_time)
+
+framework_name = cfg['logging']['framework_name']
+if framework_name == 'wandb':
+    wandb.init(project=cfg['logging']['project_name'], name=logging_name, config=cfg)
+pprint.pprint(cfg)
 ################################
 #### 1. BUILD THE DATASET
 ################################

@@ -61,7 +61,6 @@ def loop_one_epoch(
                     clean_grads = get_gradients(optimizer)
                     optimizer.zero_grad()
                     
-                    # outputs = net(inputs)
                     noise_outputs = outputs[noise_masks]
                     noise_targets = targets[noise_masks]
                     

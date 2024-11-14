@@ -9,8 +9,6 @@ from .vasso import VASSO
 from .vassosamean import VASSOSAMEAN
 from .gsam import GSAM
 from .gsamean import GSAMEAN
-from .msam import MSAM
-from .ultisam import ULTISAM
 
 def get_optimizer(
     net,
@@ -20,8 +18,6 @@ def get_optimizer(
         return SAM(net.parameters(), **opt_hyperpara)
     elif opt_name == 'sgd':
         return SGD(net.parameters(), **opt_hyperpara)
-    elif opt_name == 'msam':
-        return MSAM(net.parameters(), **opt_hyperpara)
     elif opt_name == 'samonly':
         return SAMONLY(net.parameters(), **opt_hyperpara)
     elif opt_name == 'samwo':
