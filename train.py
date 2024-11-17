@@ -30,6 +30,7 @@ alpha_scheduler = cfg['trainer'].get('alpha_scheduler', None)
 # patience = cfg['trainer'].get('patience', 20)
 scheduler = cfg['trainer'].get('scheduler', None)
 use_val = cfg['dataloader'].get('use_val', False)
+log_fig4 = True if cfg['optimizer']['opt_name'] == 'sam' else False
 
 print('==> Initialize Logging Framework..')
 logging_name = get_logging_name(cfg)
@@ -101,7 +102,8 @@ if __name__ == "__main__":
             logging_dict=logging_dict,
             epoch=epoch,
             loop_type='train',
-            logging_name=logging_name)
+            logging_name=logging_name,
+            log_fig4=log_fig4)
         best_acc, acc = loop_one_epoch(
             dataloader=test_dataloader,
             net=net,

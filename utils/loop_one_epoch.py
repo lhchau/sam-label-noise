@@ -15,7 +15,8 @@ def loop_one_epoch(
     epoch,
     loop_type='train',
     logging_name=None,
-    best_acc=0
+    best_acc=0,
+    log_fig4=False
     ):
     loss = 0
     total = 0
@@ -25,8 +26,9 @@ def loop_one_epoch(
     noise_total = 0
     noise_correct = 0
     noise_acc, clean_acc = 0, 0
-    prop_A_over_bad_list, prop_B_over_bad_list, prop_C_over_bad_list = [], [], []
-    prop_A_over_good_list, prop_B_over_good_list, prop_C_over_good_list = [], [], []
+    if log_fig4:
+        prop_A_over_bad_list, prop_B_over_bad_list, prop_C_over_bad_list = [], [], []
+        prop_A_over_good_list, prop_B_over_good_list, prop_C_over_good_list = [], [], []
     
     if loop_type == 'train': 
         net.train()
@@ -37,10 +39,10 @@ def loop_one_epoch(
             elif len(batch) == 3:
                 inputs, targets, noise_masks = batch
                 inputs, targets, noise_masks = inputs.to(device), targets.to(device), noise_masks.to(device)
-            
-            clean_inputs, noise_inputs = inputs[noise_masks == 0], inputs[noise_masks == 1]
-            clean_targets, noise_targets = targets[noise_masks == 0], targets[noise_masks == 1]
-            
+            if log_fig4:
+                clean_inputs, noise_inputs = inputs[noise_masks == 0], inputs[noise_masks == 1]
+                clean_targets, noise_targets = targets[noise_masks == 0], targets[noise_masks == 1]
+                
             opt_name = type(optimizer).__name__
             if opt_name == 'SGD':
                 outputs = net(inputs)
@@ -51,7 +53,7 @@ def loop_one_epoch(
             else:
                 enable_running_stats(net)  # <- this is the important line
                 outputs = net(inputs)
-                if (batch_idx + 1) % 5 == 0:
+                if (batch_idx + 1) % 5 == 0 and log_fig4:
                     clean_outputs = outputs[torch.logical_not(noise_masks)]
                     clean_targets = targets[torch.logical_not(noise_masks)]
                     
@@ -77,7 +79,7 @@ def loop_one_epoch(
                 disable_running_stats(net)  # <- this is the important line
                 criterion(net(inputs), targets).backward()
 
-                if (batch_idx + 1) % 5 == 0:
+                if (batch_idx + 1) % 5 == 0 and log_fig4:
                     bad_masks = get_mask_A_less_magnitude_than_B_diff_sign(clean_grads, noise_grads)
                     good_masks = get_mask_A_less_magnitude_than_B_diff_sign(noise_grads, clean_grads)
                     _, masksA = get_grads_and_masks_at_group(optimizer, gr='A')
@@ -95,15 +97,16 @@ def loop_one_epoch(
                 if (batch_idx + 1) % len(dataloader) == 0:
                     logging_dict.update(get_checkpoint(optimizer))
                     logging_dict.update(get_norm(optimizer))
-                
-                    logging_dict.update({
-                        'prop/prop_A_over_bad': np.mean(prop_A_over_bad_list),
-                        'prop/prop_B_over_bad': np.mean(prop_B_over_bad_list),
-                        'prop/prop_C_over_bad': np.mean(prop_C_over_bad_list),
-                        'prop/prop_A_over_good': np.mean(prop_A_over_good_list),
-                        'prop/prop_B_over_good': np.mean(prop_B_over_good_list),
-                        'prop/prop_C_over_good': np.mean(prop_C_over_good_list)
-                    })
+
+                    if log_fig4:
+                        logging_dict.update({
+                            'prop/prop_A_over_bad': np.mean(prop_A_over_bad_list),
+                            'prop/prop_B_over_bad': np.mean(prop_B_over_bad_list),
+                            'prop/prop_C_over_bad': np.mean(prop_C_over_bad_list),
+                            'prop/prop_A_over_good': np.mean(prop_A_over_good_list),
+                            'prop/prop_B_over_good': np.mean(prop_B_over_good_list),
+                            'prop/prop_C_over_good': np.mean(prop_C_over_good_list)
+                        })
                 optimizer.second_step(zero_grad=True)
                 
             with torch.no_grad():
