@@ -53,7 +53,7 @@ def loop_one_epoch(
             else:
                 enable_running_stats(net)  # <- this is the important line
                 outputs = net(inputs)
-                if (batch_idx + 1) % 5 == 0 and log_fig4:
+                if (batch_idx + 1) % 8 == 0 and log_fig4:
                     clean_outputs = outputs[torch.logical_not(noise_masks)]
                     clean_targets = targets[torch.logical_not(noise_masks)]
                     
@@ -79,20 +79,20 @@ def loop_one_epoch(
                 disable_running_stats(net)  # <- this is the important line
                 criterion(net(inputs), targets).backward()
 
-                if (batch_idx + 1) % 5 == 0 and log_fig4:
+                if (batch_idx + 1) % 8 == 0 and log_fig4:
                     bad_masks = get_mask_A_less_magnitude_than_B_diff_sign(clean_grads, noise_grads)
                     good_masks = get_mask_A_less_magnitude_than_B_diff_sign(noise_grads, clean_grads)
-                    _, masksA = get_grads_and_masks_at_group(optimizer, gr='A')
+                    # _, masksA = get_grads_and_masks_at_group(optimizer, gr='A')
                     _, masksB = get_grads_and_masks_at_group(optimizer, gr='B')
-                    _, masksC = get_grads_and_masks_at_group(optimizer, gr='C')
+                    # _, masksC = get_grads_and_masks_at_group(optimizer, gr='C')
                     
-                    prop_A_over_bad_list.append(count_overlap_two_mask(masksA, bad_masks).item())
+                    # prop_A_over_bad_list.append(count_overlap_two_mask(masksA, bad_masks).item())
                     prop_B_over_bad_list.append(count_overlap_two_mask(masksB, bad_masks).item())
-                    prop_C_over_bad_list.append(count_overlap_two_mask(masksC, bad_masks).item())
+                    # prop_C_over_bad_list.append(count_overlap_two_mask(masksC, bad_masks).item())
                     
-                    prop_A_over_good_list.append(count_overlap_two_mask(masksA, good_masks).item())
+                    # prop_A_over_good_list.append(count_overlap_two_mask(masksA, good_masks).item())
                     prop_B_over_good_list.append(count_overlap_two_mask(masksB, good_masks).item())
-                    prop_C_over_good_list.append(count_overlap_two_mask(masksC, good_masks).item())
+                    # prop_C_over_good_list.append(count_overlap_two_mask(masksC, good_masks).item())
 
                 if (batch_idx + 1) % len(dataloader) == 0:
                     logging_dict.update(get_checkpoint(optimizer))
@@ -100,12 +100,12 @@ def loop_one_epoch(
 
                     if log_fig4:
                         logging_dict.update({
-                            'prop/prop_A_over_bad': np.mean(prop_A_over_bad_list),
+                            # 'prop/prop_A_over_bad': np.mean(prop_A_over_bad_list),
                             'prop/prop_B_over_bad': np.mean(prop_B_over_bad_list),
-                            'prop/prop_C_over_bad': np.mean(prop_C_over_bad_list),
-                            'prop/prop_A_over_good': np.mean(prop_A_over_good_list),
+                            # 'prop/prop_C_over_bad': np.mean(prop_C_over_bad_list),
+                            # 'prop/prop_A_over_good': np.mean(prop_A_over_good_list),
                             'prop/prop_B_over_good': np.mean(prop_B_over_good_list),
-                            'prop/prop_C_over_good': np.mean(prop_C_over_good_list)
+                            # 'prop/prop_C_over_good': np.mean(prop_C_over_good_list)
                         })
                 optimizer.second_step(zero_grad=True)
                 
