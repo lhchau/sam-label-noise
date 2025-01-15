@@ -113,7 +113,7 @@ def loop_one_epoch(
                     # prop_C_over_good_list.append(count_overlap_two_mask(masksC, good_masks).item())
 
                 if (batch_idx + 1) % len(dataloader) == 0:
-                    logging_dict.update(get_checkpoint(optimizer, [epoch]))
+                    logging_dict.update(get_checkpoint(optimizer))
                     logging_dict.update(get_norm(optimizer))
 
                     if log_fig4:
