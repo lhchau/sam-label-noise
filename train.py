@@ -23,8 +23,6 @@ best_acc, start_epoch, logging_dict = 0, 0, {}
 
 # Total number of training epochs
 EPOCHS = cfg['trainer']['epochs'] 
-
-
 resume = cfg['trainer'].get('resume', None)
 alpha_scheduler = cfg['trainer'].get('alpha_scheduler', None)
 # patience = cfg['trainer'].get('patience', 20)
@@ -54,15 +52,6 @@ else:
 ################################
 net = get_model(**cfg['model'], num_classes=num_classes)
 net = net.to(device)
-if resume:
-    print('==> Resuming from best checkpoint..')
-    assert os.path.isdir('checkpoint'), 'Error: no checkpoint directory found!'
-    load_path = os.path.join('checkpoint', resume, 'ckpt_best.pth')
-    checkpoint = torch.load(load_path)
-    net.load_state_dict(checkpoint['net'])
-    start_epoch = checkpoint['epoch']
-    best_acc = checkpoint['acc']
-
 total_params = sum(p.numel() for p in net.parameters())
 print(f'==> Number of parameters in {cfg["model"]}: {total_params}')
 
@@ -70,8 +59,13 @@ print(f'==> Number of parameters in {cfg["model"]}: {total_params}')
 #### 3.a OPTIMIZING MODEL PARAMETERS
 ################################
 criterion = nn.CrossEntropyLoss()
+# criterion = HardBootstrappingLoss()
 opt_name = cfg['optimizer'].pop('opt_name', None)
 optimizer = get_optimizer(net, opt_name, cfg['optimizer'])
+
+# param_name_map = [name for name, _ in net.named_parameters()]
+# optimizer.set_param_name_map(param_name_map)
+
 if scheduler == 'cosine':
     scheduler = torch.optim.lr_scheduler.CosineAnnealingLR(optimizer, T_max=EPOCHS)
 elif scheduler == 'tiny_imagenet':

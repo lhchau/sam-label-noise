@@ -12,6 +12,44 @@ import numpy as np
 import torch
 import torch.nn as nn
 import torch.nn.init as init
+import torch.nn.functional as F
+
+def cosine_similarity(grad1, grad2):
+    dot_product = torch.sum(grad1 * grad2)
+    norm_grad1 = torch.norm(grad1)
+    norm_grad2 = torch.norm(grad2)
+    similarity = dot_product / (norm_grad1 * norm_grad2 + 1e-18)
+    return similarity.item()
+
+class HardBootstrappingLoss(nn.Module):
+    """
+    ``Loss(t, p) = - (beta * t + (1 - beta) * z) * log(p)``
+    where ``z = argmax(p)``
+
+    Args:
+        beta (float): bootstrap parameter. Default, 0.95
+        reduce (bool): computes mean of the loss. Default, True.
+
+    """
+    def __init__(self, beta=0.8, reduce=True):
+        super(HardBootstrappingLoss, self).__init__()
+        self.beta = beta
+        self.reduce = reduce
+
+    def forward(self, y_pred, y):
+        # cross_entropy = - t * log(p)
+        beta_xentropy = self.beta * F.cross_entropy(y_pred, y, reduction='none')
+
+        # z = argmax(p)
+        z = F.softmax(y_pred.detach(), dim=1).argmax(dim=1)
+        z = z.view(-1, 1)
+        bootstrap = F.log_softmax(y_pred, dim=1).gather(1, z).view(-1)
+        # second term = (1 - beta) * z * log(p)
+        bootstrap = - (1.0 - self.beta) * bootstrap
+
+        if self.reduce:
+            return torch.mean(beta_xentropy + bootstrap)
+        return beta_xentropy + bootstrap
 
 def get_grads_and_masks_at_group(optimizer, gr='B', alpha=1):
     grads, masks = [], []
@@ -29,7 +67,7 @@ def get_grads_and_masks_at_group(optimizer, gr='B', alpha=1):
             else:
                 mask = ratio <= 0
             masks.append(mask)
-            grads.append(p.grad.mul(mask))
+            grads.append(param_state['first_grad'].mul(mask))
     return grads, masks
 
 def get_mask_A_B_same_or_diff_sign(grads_A, grads_B, sign='same'):
@@ -111,8 +149,9 @@ def get_checkpoint(optimizer, stored_info=[]):
             num_para_c += torch.sum( ratio <= 0)
     if len(stored_info):
         epoch = stored_info[0]
-        with open(f'./stored/ratios_epoch{epoch}.pkl', 'wb') as f:
-            pickle.dump(ratios, f)
+        if (epoch + 1) % 10 == 0:
+            with open(f'./stored/ratios_epoch{epoch}.pkl', 'wb') as f:
+                pickle.dump(ratios, f)
     return  {
         'num_para_a': (num_para_a / total_para) * 100, 
         'num_para_b': (num_para_b / total_para) * 100,
