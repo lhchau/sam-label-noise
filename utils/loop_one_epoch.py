@@ -30,7 +30,7 @@ def loop_one_epoch(
         prop_A_over_bad_list, prop_B_over_bad_list, prop_C_over_bad_list = [], [], []
         prop_A_over_good_list, prop_B_over_good_list, prop_C_over_good_list = [], [], []
         A_cosine_score, B_cosine_score, C_cosine_score = [], [], []
-    
+        clean_A_cosine_score, clean_B_cosine_score, clean_C_cosine_score = [], [], []
     if loop_type == 'train': 
         net.train()
         for batch_idx, batch in enumerate(dataloader):
@@ -41,8 +41,8 @@ def loop_one_epoch(
                 inputs, targets, noise_masks = batch
                 inputs, targets, noise_masks = inputs.to(device), targets.to(device), noise_masks.to(device)
             if log_fig4:
-                _, noise_inputs = inputs[noise_masks == 0], inputs[noise_masks == 1]
-                _, noise_targets = targets[noise_masks == 0], targets[noise_masks == 1]
+                clean_inputs, noise_inputs = inputs[noise_masks == 0], inputs[noise_masks == 1]
+                clean_targets, noise_targets = targets[noise_masks == 0], targets[noise_masks == 1]
                 
             opt_name = type(optimizer).__name__
             if opt_name == 'SGD':
@@ -55,14 +55,14 @@ def loop_one_epoch(
                 enable_running_stats(net)  # <- this is the important line
                 outputs = net(inputs)
                 if (batch_idx + 1) % 8 == 0 and log_fig4:
-                    # clean_outputs = outputs[torch.logical_not(noise_masks)]
-                    # clean_targets = targets[torch.logical_not(noise_masks)]
+                    clean_outputs = outputs[torch.logical_not(noise_masks)]
+                    clean_targets = targets[torch.logical_not(noise_masks)]
                     
-                    # num_clean_examples = clean_inputs.shape[0]
-                    # clean_loss = criterion(clean_outputs, clean_targets) * (num_clean_examples)
-                    # clean_loss.backward(retain_graph=True)
-                    # clean_grads = get_gradients(optimizer)
-                    # optimizer.zero_grad()
+                    num_clean_examples = clean_inputs.shape[0]
+                    clean_loss = criterion(clean_outputs, clean_targets) * (num_clean_examples)
+                    clean_loss.backward(retain_graph=True)
+                    clean_grads = get_gradients(optimizer)
+                    optimizer.zero_grad()
                     
                     noise_outputs = outputs[noise_masks]
                     noise_targets = targets[noise_masks]
@@ -89,18 +89,30 @@ def loop_one_epoch(
                     for A_grad, noise_grad in zip(A_grads, noise_grads):
                         cosine_score.append(cosine_similarity(A_grad, noise_grad))
                     A_cosine_score.append(np.mean(cosine_score))
+                    cosine_score = []
+                    for A_grad, clean_grad in zip(A_grads, clean_grads):
+                        cosine_score.append(cosine_similarity(A_grad, clean_grad))
+                    clean_A_cosine_score.append(np.mean(cosine_score))
                     
                     B_grads, _ = get_grads_and_masks_at_group(optimizer, gr='B')
                     cosine_score = []
                     for B_grad, noise_grad in zip(B_grads, noise_grads):
                         cosine_score.append(cosine_similarity(B_grad, noise_grad))
                     B_cosine_score.append(np.mean(cosine_score))
+                    cosine_score = []
+                    for B_grad, clean_grad in zip(B_grads, clean_grads):
+                        cosine_score.append(cosine_similarity(B_grad, clean_grad))
+                    clean_B_cosine_score.append(np.mean(cosine_score))
                     
                     C_grads, _ = get_grads_and_masks_at_group(optimizer, gr='C')
                     cosine_score = []
                     for C_grad, noise_grad in zip(C_grads, noise_grads):
                         cosine_score.append(cosine_similarity(C_grad, noise_grad))
                     C_cosine_score.append(np.mean(cosine_score))
+                    cosine_score = []
+                    for C_grad, clean_grad in zip(C_grads, clean_grads):
+                        cosine_score.append(cosine_similarity(C_grad, clean_grad))
+                    clean_C_cosine_score.append(np.mean(cosine_score))
                     
                     # _, masksC = get_grads_and_masks_at_group(optimizer, gr='C')
                     
@@ -120,7 +132,10 @@ def loop_one_epoch(
                         logging_dict.update({
                             'prop/A_cosine_score': np.mean(A_cosine_score),
                             'prop/B_cosine_score': np.mean(B_cosine_score),
-                            'prop/C_cosine_score': np.mean(C_cosine_score)
+                            'prop/C_cosine_score': np.mean(C_cosine_score),
+                            'prop/clean_A_cosine_score': np.mean(clean_A_cosine_score),
+                            'prop/clean_B_cosine_score': np.mean(clean_B_cosine_score),
+                            'prop/clean_C_cosine_score': np.mean(clean_C_cosine_score)
                             # 'prop/prop_A_over_bad': np.mean(prop_A_over_bad_list),
                             # 'prop/prop_B_over_bad': np.mean(prop_B_over_bad_list),
                             # 'prop/prop_C_over_bad': np.mean(prop_C_over_bad_list),
