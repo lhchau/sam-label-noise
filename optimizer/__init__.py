@@ -9,6 +9,8 @@ from .vasso import VASSO
 from .vassosamean import VASSOSAMEAN
 from .gsam import GSAM
 from .gsamean import GSAMEAN
+from .samabs import SAMABS
+from .samba import SAMBA
 
 def get_optimizer(
     net,
@@ -24,6 +26,10 @@ def get_optimizer(
         return SAMWO(net.parameters(), **opt_hyperpara)
     elif opt_name == 'schedulersamean':
         return SCHEDULERSAMEAN(net.parameters(), **opt_hyperpara)
+    elif opt_name == 'samabs':
+        return SAMABS(net.parameters(), **opt_hyperpara)
+    elif opt_name == 'samba':
+        return SAMBA(net.parameters(), **opt_hyperpara)
     elif opt_name == 'fsam':
         return FriendlySAM(net.parameters(), **opt_hyperpara)
     elif opt_name == 'fsamean':

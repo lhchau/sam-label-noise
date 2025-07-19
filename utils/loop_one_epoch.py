@@ -16,7 +16,6 @@ def loop_one_epoch(
     loop_type='train',
     logging_name=None,
     best_acc=0,
-    log_fig4=False
     ):
     loss = 0
     total = 0
@@ -27,14 +26,6 @@ def loop_one_epoch(
     noise_correct = 0
     noise_acc, clean_acc = 0, 0
     
-    noise_true_acc = 0
-    true_targets = None
-    noise_true_correct = 0
-    if log_fig4:
-        prop_A_over_bad_list, prop_B_over_bad_list, prop_C_over_bad_list = [], [], []
-        prop_A_over_good_list, prop_B_over_good_list, prop_C_over_good_list = [], [], []
-        A_cosine_score, B_cosine_score, C_cosine_score = [], [], []
-        clean_A_cosine_score, clean_B_cosine_score, clean_C_cosine_score = [], [], []
     if loop_type == 'train': 
         net.train()
         for batch_idx, batch in enumerate(dataloader):
@@ -44,12 +35,6 @@ def loop_one_epoch(
             elif len(batch) == 3:
                 inputs, targets, noise_masks = batch
                 inputs, targets, noise_masks = inputs.to(device), targets.to(device), noise_masks.to(device)
-            elif len(batch) == 4:
-                inputs, targets, noise_masks, true_targets = batch
-                inputs, targets, noise_masks, true_targets = inputs.to(device), targets.to(device), noise_masks.to(device), true_targets.to(device)
-            # if log_fig4:
-            #     clean_inputs, noise_inputs = inputs[noise_masks == 0], inputs[noise_masks == 1]
-            #     clean_targets, noise_targets = targets[noise_masks == 0], targets[noise_masks == 1]
                 
             opt_name = type(optimizer).__name__
             if opt_name == 'SGD':
@@ -61,24 +46,6 @@ def loop_one_epoch(
             else:
                 enable_running_stats(net)  # <- this is the important line
                 outputs = net(inputs)
-                # if (batch_idx + 1) % 8 == 0 and log_fig4:
-                #     clean_outputs = outputs[torch.logical_not(noise_masks)]
-                #     clean_targets = targets[torch.logical_not(noise_masks)]
-                    
-                #     num_clean_examples = clean_inputs.shape[0]
-                #     clean_loss = criterion(clean_outputs, clean_targets) * (num_clean_examples)
-                #     clean_loss.backward(retain_graph=True)
-                #     clean_grads = get_gradients(optimizer)
-                #     optimizer.zero_grad()
-                    
-                #     noise_outputs = outputs[noise_masks]
-                #     noise_targets = targets[noise_masks]
-                    
-                #     num_noise_examples = noise_inputs.shape[0]
-                #     noise_loss = criterion(noise_outputs, noise_targets) * (num_noise_examples/128)
-                #     noise_loss.backward(retain_graph=True)
-                #     noise_grads = get_gradients(optimizer)
-                    
                 optimizer.zero_grad()
                 first_loss = criterion(outputs, targets)
                 first_loss.backward()        
@@ -86,70 +53,6 @@ def loop_one_epoch(
                 
                 disable_running_stats(net)  # <- this is the important line
                 criterion(net(inputs), targets).backward()
-
-                # if (batch_idx + 1) % 8 == 0 and log_fig4:
-                #     # bad_masks = get_mask_A_less_magnitude_than_B_diff_sign(clean_grads, noise_grads)
-                #     # good_masks = get_mask_A_less_magnitude_than_B_diff_sign(noise_grads, clean_grads)
-                #     # _, masksA = get_grads_and_masks_at_group(optimizer, gr='A')
-                #     A_grads, _ = get_grads_and_masks_at_group(optimizer, gr='A')
-                #     cosine_score = []
-                #     for A_grad, noise_grad in zip(A_grads, noise_grads):
-                #         cosine_score.append(cosine_similarity(A_grad, noise_grad))
-                #     A_cosine_score.append(np.mean(cosine_score))
-                #     cosine_score = []
-                #     for A_grad, clean_grad in zip(A_grads, clean_grads):
-                #         cosine_score.append(cosine_similarity(A_grad, clean_grad))
-                #     clean_A_cosine_score.append(np.mean(cosine_score))
-                    
-                #     B_grads, _ = get_grads_and_masks_at_group(optimizer, gr='B')
-                #     cosine_score = []
-                #     for B_grad, noise_grad in zip(B_grads, noise_grads):
-                #         cosine_score.append(cosine_similarity(B_grad, noise_grad))
-                #     B_cosine_score.append(np.mean(cosine_score))
-                #     cosine_score = []
-                #     for B_grad, clean_grad in zip(B_grads, clean_grads):
-                #         cosine_score.append(cosine_similarity(B_grad, clean_grad))
-                #     clean_B_cosine_score.append(np.mean(cosine_score))
-                    
-                #     C_grads, _ = get_grads_and_masks_at_group(optimizer, gr='C')
-                #     cosine_score = []
-                #     for C_grad, noise_grad in zip(C_grads, noise_grads):
-                #         cosine_score.append(cosine_similarity(C_grad, noise_grad))
-                #     C_cosine_score.append(np.mean(cosine_score))
-                #     cosine_score = []
-                #     for C_grad, clean_grad in zip(C_grads, clean_grads):
-                #         cosine_score.append(cosine_similarity(C_grad, clean_grad))
-                #     clean_C_cosine_score.append(np.mean(cosine_score))
-                    
-                #     # _, masksC = get_grads_and_masks_at_group(optimizer, gr='C')
-                    
-                #     # prop_A_over_bad_list.append(count_overlap_two_mask(masksA, bad_masks).item())
-                #     # prop_B_over_bad_list.append(count_overlap_two_mask(masksB, bad_masks).item())
-                #     # prop_C_over_bad_list.append(count_overlap_two_mask(masksC, bad_masks).item())
-                    
-                #     # prop_A_over_good_list.append(count_overlap_two_mask(masksA, good_masks).item())
-                #     # prop_B_over_good_list.append(count_overlap_two_mask(masksB, good_masks).item())
-                #     # prop_C_over_good_list.append(count_overlap_two_mask(masksC, good_masks).item())
-
-                # if (batch_idx + 1) % len(dataloader) == 0:
-                #     logging_dict.update(get_checkpoint(optimizer))
-                #     logging_dict.update(get_norm(optimizer))
-
-                #     if log_fig4:
-                #         logging_dict.update({
-                #             'prop/A_cosine_score': np.mean(A_cosine_score),
-                #             'prop/B_cosine_score': np.mean(B_cosine_score),
-                #             'prop/C_cosine_score': np.mean(C_cosine_score),
-                #             'prop/clean_A_cosine_score': np.mean(clean_A_cosine_score),
-                #             'prop/clean_B_cosine_score': np.mean(clean_B_cosine_score),
-                #             'prop/clean_C_cosine_score': np.mean(clean_C_cosine_score)
-                #             # 'prop/prop_A_over_bad': np.mean(prop_A_over_bad_list),
-                #             # 'prop/prop_B_over_bad': np.mean(prop_B_over_bad_list),
-                #             # 'prop/prop_C_over_bad': np.mean(prop_C_over_bad_list),
-                #             # 'prop/prop_A_over_good': np.mean(prop_A_over_good_list),
-                #             # 'prop/prop_B_over_good': np.mean(prop_B_over_good_list),
-                #             # 'prop/prop_C_over_good': np.mean(prop_C_over_good_list)
-                #         })
                 optimizer.second_step(zero_grad=True)
                 
             with torch.no_grad():
@@ -172,10 +75,6 @@ def loop_one_epoch(
                     noise_correct += predicted.eq(targets).mul(noise_masks).sum().item()
                     noise_acc = 100.*noise_correct/(noise_total + 1e-6)
                     
-                    if true_targets is not None:
-                        noise_true_correct += predicted.eq(true_targets).mul(noise_masks).sum().item()
-                        noise_true_acc = 100.*noise_true_correct/(noise_total + 1e-6)
-                    
                     clean_total += (targets.size(0) - noise_masks.sum().item())
                     clean_correct += predicted.eq(targets).mul(torch.logical_not(noise_masks)).sum().item()
                     clean_acc = 100.*clean_correct/(clean_total + 1e-6)
@@ -184,8 +83,6 @@ def loop_one_epoch(
         logging_dict[f'{loop_type.title()}/noise_acc'] = noise_acc
         logging_dict[f'{loop_type.title()}/clean_acc'] = clean_acc
         logging_dict[f'{loop_type.title()}/gap_clean_noise_acc'] = clean_acc - noise_acc
-        
-        logging_dict[f'{loop_type.title()}/noise_true_acc'] = noise_true_acc
     elif loop_type == 'test':
         net.eval()
         with torch.no_grad():
