@@ -11,6 +11,7 @@ from .gsam import GSAM
 from .gsamean import GSAMEAN
 from .samabs import SAMABS
 from .samba import SAMBA
+from .samurai import SAMURAI
 
 def get_optimizer(
     net,
@@ -30,6 +31,8 @@ def get_optimizer(
         return SAMABS(net.parameters(), **opt_hyperpara)
     elif opt_name == 'samba':
         return SAMBA(net.parameters(), **opt_hyperpara)
+    elif opt_name == 'samurai':
+        return SAMURAI(net.parameters(), **opt_hyperpara)
     elif opt_name == 'fsam':
         return FriendlySAM(net.parameters(), **opt_hyperpara)
     elif opt_name == 'fsamean':
