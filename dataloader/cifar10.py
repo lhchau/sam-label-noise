@@ -75,7 +75,6 @@ class CIFAR10Noisy(torchvision.datasets.CIFAR10):
 
     def __getitem__(self, index):
         img, target, flip_label = self.data[index], self.noisy_labels[index], self.flip_labels[index]
-        true_target = self.targets[index]
         
         img = Image.fromarray(img)
         
@@ -86,7 +85,7 @@ class CIFAR10Noisy(torchvision.datasets.CIFAR10):
         if self.target_transform is not None:
             target = self.target_transform(target)
 
-        return img, target, flip_label, true_target
+        return img, target, flip_label
  
 def get_real_world_cifar(dataset="cifar10"):
     if dataset == "cifar10":
