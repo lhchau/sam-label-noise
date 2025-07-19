@@ -2,13 +2,14 @@ import torch
 
 
 class SAMABS(torch.optim.Optimizer):
-    def __init__(self, params, rho=0.05, adaptive=False, group="B", condition=1, **kwargs):
+    def __init__(self, params, rho=0.05, adaptive=False, group="B", condition=1, threshold=0.5, **kwargs):
         assert rho >= 0.0, f"Invalid rho, should be non-negative: {rho}"
 
         defaults = dict(rho=rho, adaptive=adaptive, **kwargs)
         super(SAMABS, self).__init__(params, defaults)
         self.group = group
         self.condition = condition
+        self.threshold = threshold
 
     @torch.no_grad()
     def first_step(self, zero_grad=False):
@@ -45,9 +46,9 @@ class SAMABS(torch.optim.Optimizer):
                 if self.group == "A":
                     mask = ratio >= 1
                 elif self.group == "B1":
-                    mask = torch.logical_and(ratio > 0, ratio < 0.5)
+                    mask = torch.logical_and(ratio > 0, ratio < self.threshold)
                 elif self.group == "B2":
-                    mask = torch.logical_and(ratio > 0.5, ratio < 1)
+                    mask = torch.logical_and(ratio >= self.threshold, ratio < 1)
                 elif self.group == "C":
                     mask = ratio <= 0
 

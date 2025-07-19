@@ -2,7 +2,7 @@ import torch
 
 
 class SAMURAI(torch.optim.Optimizer):
-    def __init__(self, params, rho=0.05, adaptive=False, group="B", condition1=1, condition2=1, **kwargs):
+    def __init__(self, params, rho=0.05, adaptive=False, group="B", condition1=1, condition2=1, threshold=0.5, **kwargs):
         assert rho >= 0.0, f"Invalid rho, should be non-negative: {rho}"
 
         defaults = dict(rho=rho, adaptive=adaptive, **kwargs)
@@ -10,6 +10,7 @@ class SAMURAI(torch.optim.Optimizer):
         self.group = group
         self.condition1 = condition1
         self.condition2 = condition2
+        self.threshold = threshold
 
     @torch.no_grad()
     def first_step(self, zero_grad=False):
@@ -43,8 +44,8 @@ class SAMURAI(torch.optim.Optimizer):
                 p.sub_(param_state['e_w'])  # get back to "w" from "w + e(w)"
 
                 ratio = p.grad.div(param_state['first_grad'].add(1e-8))
-                mask1 = torch.logical_and(ratio > 0, ratio < 0.5)
-                mask2 = torch.logical_and(ratio > 0.5, ratio < 1)
+                mask1 = torch.logical_and(ratio > 0, ratio < self.threshold)
+                mask2 = torch.logical_and(ratio >= self.threshold, ratio < 1)
 
                 d_p = p.grad.mul(mask1).mul(self.condition1) + p.grad.mul(mask2).mul(self.condition2) + p.grad.mul(torch.logical_not(torch.logical_or(mask1, mask2)))
                 if weight_decay != 0:
