@@ -37,10 +37,13 @@ class SAMBA(torch.optim.Optimizer):
                 param_state = self.state[p]
                 p.sub_(param_state['e_w'])  # get back to "w" from "w + e(w)"
 
-                ratio = p.grad.div(param_state['first_grad'].add(1e-8))
-                ratio = torch.where(torch.logical_and(ratio < 1, ratio > 0), ratio, 0)
-
+                ratio = p.grad.div(param_state['first_grad'].add(1e-12))
+                if torch.isnan(ratio).any() or torch.isinf(ratio).any():
+                    raise ValueError("Ratio contains NaN or Inf")
+                mask = (ratio <= 0) | (ratio >= 1)
+                ratio.masked_fill_(mask, 0)
                 scale = torch.exp(-self.alpha * ratio)
+
                 d_p = p.grad.mul(scale)
                 if weight_decay != 0:
                     d_p.add_(p.data, alpha=weight_decay)
