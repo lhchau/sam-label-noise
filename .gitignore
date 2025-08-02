@@ -4,3 +4,5 @@ __pycache__
 wandb
 stored
 plot/*
+toy_example
+runs
