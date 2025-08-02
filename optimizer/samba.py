@@ -49,8 +49,7 @@ class SAMBA(torch.optim.Optimizer):
                     d_p.add_(p.data, alpha=weight_decay)
 
                 if 'exp_avg' not in param_state:
-                    param_state['exp_avg'] = torch.zeros_like(
-                        p, memory_format=torch.preserve_format)
+                    param_state['exp_avg'] = torch.zeros_like(p, memory_format=torch.preserve_format)
                 param_state['exp_avg'].mul_(momentum).add_(d_p)
 
                 p.add_(param_state['exp_avg'], alpha=-step_size)

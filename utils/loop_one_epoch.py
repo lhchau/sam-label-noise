@@ -100,7 +100,8 @@ def loop_one_epoch(
 
                 loss_mean = loss/(batch_idx+1)
                 acc = 100.*correct/total
-                progress_bar(batch_idx, len(dataloader), 'Loss: %.3f | Acc: %.3f%% (%d/%d)'% (loss_mean, acc, correct, total))
+                if batch_idx % (len(dataloader) // 5) == 0 or (batch_idx + 1) == len(dataloader):
+                    progress_bar(batch_idx, len(dataloader), 'Loss: %.3f | Acc: %.3f%% (%d/%d)'% (loss_mean, acc, correct, total))
             if acc > best_acc:
                 print('Saving best checkpoint ...')
                 state = {
@@ -138,8 +139,8 @@ def loop_one_epoch(
 
                 loss_mean = loss/(batch_idx+1)
                 acc = 100.*correct/total
-
-                progress_bar(batch_idx, len(dataloader), 'Loss: %.3f | Acc: %.3f%% (%d/%d)'% (loss_mean, acc, correct, total))
+                if batch_idx % 5 == 0 or (batch_idx + 1) == len(dataloader):
+                    progress_bar(batch_idx, len(dataloader), 'Loss: %.3f | Acc: %.3f%% (%d/%d)'% (loss_mean, acc, correct, total))
                 
     logging_dict[f'{loop_type.title()}/loss'] = loss_mean
     logging_dict[f'{loop_type.title()}/acc'] = acc
