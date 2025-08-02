@@ -44,5 +44,8 @@ def exec_configurator():
             # assert type(attempt) == type(globals()[key])
             # cross fingers
             print(f"Overriding: {key} = {attempt}")
-            cfg[parent_key][child_key] = attempt
+            if child_key not in cfg[parent_key]:
+                cfg[parent_key].setdefault(child_key, attempt)
+            else:
+                cfg[parent_key][child_key] = attempt
     return cfg

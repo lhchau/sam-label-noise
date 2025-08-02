@@ -2,10 +2,11 @@ import torch
 
 
 class SAMBA(torch.optim.Optimizer):
-    def __init__(self, params, rho=0.05, adaptive=False, **kwargs):
+    def __init__(self, params, rho=0.05, adaptive=False, alpha=1, **kwargs):
         assert rho >= 0.0, f"Invalid rho, should be non-negative: {rho}"
         defaults = dict(rho=rho, adaptive=adaptive, **kwargs)
         super(SAMBA, self).__init__(params, defaults)
+        self.alpha = alpha
 
     @torch.no_grad()
     def first_step(self, zero_grad=False):
@@ -37,9 +38,10 @@ class SAMBA(torch.optim.Optimizer):
                 p.sub_(param_state['e_w'])  # get back to "w" from "w + e(w)"
 
                 ratio = p.grad.div(param_state['first_grad'].add(1e-8))
-                mask = torch.logical_and(ratio > 0, ratio < 1)
+                ratio = torch.where(torch.logical_and(ratio < 1, ratio > 0), ratio, 0)
 
-                d_p = p.grad.mul(mask).mul(1 - ratio) + p.grad.mul(torch.logical_not(mask))
+                scale = torch.exp(-self.alpha * ratio)
+                d_p = p.grad.mul(scale)
                 if weight_decay != 0:
                     d_p.add_(p.data, alpha=weight_decay)
 
