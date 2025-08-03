@@ -65,7 +65,8 @@ def loop_one_epoch(
                 acc = 100.*correct/total
                 
                 if len(batch) == 2:
-                    progress_bar(batch_idx, len(dataloader), 'Loss: %.3f | Acc: %.3f%% (%d/%d)'% (loss_mean, acc, correct, total))
+                    if batch_idx % 5 == 0 or (batch_idx + 1) == len(dataloader):
+                        progress_bar(batch_idx, len(dataloader), 'Loss: %.3f | Acc: %.3f%% (%d/%d)'% (loss_mean, acc, correct, total))
                 else:
                     total += targets.size(0)
                     correct += predicted.eq(targets).sum().item()
@@ -79,7 +80,8 @@ def loop_one_epoch(
                     clean_correct += predicted.eq(targets).mul(torch.logical_not(noise_masks)).sum().item()
                     clean_acc = 100.*clean_correct/(clean_total + 1e-6)
                     
-                    progress_bar(batch_idx, len(dataloader), 'Loss: %.3f | Acc: %.3f%% (%d/%d) | Noise: %.3f%% (%d/%d) | Clean: %.3f%% (%d/%d)'% (loss_mean, acc, correct, total, noise_acc, noise_correct, noise_total, clean_acc, clean_correct, clean_total))
+                    if batch_idx % 5 == 0 or (batch_idx + 1) == len(dataloader):
+                        progress_bar(batch_idx, len(dataloader), 'Loss: %.3f | Acc: %.3f%% (%d/%d) | Noise: %.3f%% (%d/%d) | Clean: %.3f%% (%d/%d)'% (loss_mean, acc, correct, total, noise_acc, noise_correct, noise_total, clean_acc, clean_correct, clean_total))
         logging_dict[f'{loop_type.title()}/noise_acc'] = noise_acc
         logging_dict[f'{loop_type.title()}/clean_acc'] = clean_acc
         logging_dict[f'{loop_type.title()}/gap_clean_noise_acc'] = clean_acc - noise_acc
