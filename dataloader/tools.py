@@ -23,7 +23,7 @@ class ClassBalancedBatchSampler(Sampler):
             self.class_to_indices[label].append(idx)
 
         self.labels = list(self.class_to_indices.keys())
-        self.num_classes_per_batch = self.batch_size * samples_per_class
+        self.num_classes_per_batch = self.batch_size // samples_per_class
 
         # Compute max number of full batches possible
         self.num_batches = self._compute_num_batches()
