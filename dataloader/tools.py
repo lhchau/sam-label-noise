@@ -11,9 +11,9 @@ from torch.utils.data import Sampler
 
 
 class ClassBalancedBatchSampler(Sampler):
-    def __init__(self, dataset, num_classes_per_batch, samples_per_class=2, drop_last=True):
+    def __init__(self, dataset, batch_size, samples_per_class=2, drop_last=True):
         self.dataset = dataset
-        self.num_classes_per_batch = num_classes_per_batch
+        self.batch_size = batch_size
         self.samples_per_class = samples_per_class
         self.drop_last = drop_last
 
@@ -23,7 +23,7 @@ class ClassBalancedBatchSampler(Sampler):
             self.class_to_indices[label].append(idx)
 
         self.labels = list(self.class_to_indices.keys())
-        self.batch_size = num_classes_per_batch * samples_per_class
+        self.num_classes_per_batch = self.batch_size * samples_per_class
 
         # Compute max number of full batches possible
         self.num_batches = self._compute_num_batches()

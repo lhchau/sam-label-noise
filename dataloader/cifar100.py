@@ -102,7 +102,7 @@ def get_cifar100(
     data_augmentation="standard", 
     data_size=1,
     use_val=False,
-    num_classes_per_batch=None):
+    samples_per_class=None):
     if data_augmentation == "standard":
         transform_train = transforms.Compose([
             transforms.RandomHorizontalFlip(),
@@ -131,28 +131,15 @@ def get_cifar100(
         
         data_test = torchvision.datasets.CIFAR100(root='./data', train=False, download=True, transform=transform_test)
         
-        if num_classes_per_batch:
-            samples_per_class = batch_size // num_classes_per_batch
-            
-            train_sampler = ClassBalancedBatchSampler(data_train, num_classes_per_batch, samples_per_class, drop_last=True)
-            train_dataloader = torch.utils.data.DataLoader(data_train, batch_sampler=train_sampler, num_workers=num_workers, pin_memory=True)
-            
-            val_dataloader = torch.utils.data.DataLoader(data_val, batch_size=100, shuffle=False, num_workers=4, pin_memory=True)
-            test_dataloader = torch.utils.data.DataLoader(data_test, batch_size=100, shuffle=False, num_workers=4, pin_memory=True)
-            
-            return train_dataloader, val_dataloader, test_dataloader, len(data_test.classes)
-        
         train_dataloader = torch.utils.data.DataLoader(data_train, batch_size=batch_size, shuffle=True, num_workers=num_workers, pin_memory=True, drop_last=True)
         val_dataloader = torch.utils.data.DataLoader(data_val, batch_size=100, shuffle=False, num_workers=4, pin_memory=True)
         test_dataloader = torch.utils.data.DataLoader(data_test, batch_size=100, shuffle=False, num_workers=4, pin_memory=True)
         
         return train_dataloader, val_dataloader, test_dataloader, len(data_test.classes)
     else:
-        if num_classes_per_batch:
-            samples_per_class = batch_size // num_classes_per_batch
-            
+        if samples_per_class:
             data_train = CIFAR100Noisy(root='./data', train=True, download=True, transform=transform_train, noise_rate=noise, noise_type=noise_type, data_size=data_size)
-            train_sampler = ClassBalancedBatchSampler(data_train, num_classes_per_batch, samples_per_class, drop_last=True)
+            train_sampler = ClassBalancedBatchSampler(data_train, batch_size, samples_per_class, drop_last=True)
             train_dataloader = torch.utils.data.DataLoader(data_train, batch_sampler=train_sampler, num_workers=num_workers, pin_memory=True)
             
             data_test = torchvision.datasets.CIFAR100(root='./data', train=False, download=True, transform=transform_test)
