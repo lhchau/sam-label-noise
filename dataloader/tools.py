@@ -19,7 +19,7 @@ class ClassBalancedBatchSampler(Sampler):
 
         # Map class labels to indices
         self.class_to_indices = defaultdict(list)
-        for idx, (_, label) in enumerate(dataset):
+        for idx, (_, label, _) in enumerate(dataset):
             self.class_to_indices[label].append(idx)
 
         self.labels = list(self.class_to_indices.keys())
