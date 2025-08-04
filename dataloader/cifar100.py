@@ -5,7 +5,7 @@ import torchvision.transforms as transforms
 import numpy as np
 from PIL import Image
 from .cutout import Cutout
-from .tools import DependentLabelGenerator
+from .tools import DependentLabelGenerator, ClassBalancedBatchSampler
 from sklearn.model_selection import train_test_split
 from torch.utils.data import random_split
 
@@ -101,7 +101,8 @@ def get_cifar100(
     noise_type='symmetric',
     data_augmentation="standard", 
     data_size=1,
-    use_val=False):
+    use_val=False,
+    num_classes_per_batch=None):
     if data_augmentation == "standard":
         transform_train = transforms.Compose([
             transforms.RandomHorizontalFlip(),
@@ -130,12 +131,35 @@ def get_cifar100(
         
         data_test = torchvision.datasets.CIFAR100(root='./data', train=False, download=True, transform=transform_test)
         
+        if num_classes_per_batch:
+            samples_per_class = batch_size // num_classes_per_batch
+            
+            train_sampler = ClassBalancedBatchSampler(data_train, num_classes_per_batch, samples_per_class, drop_last=True)
+            train_dataloader = torch.utils.data.DataLoader(data_train, batch_sampler=train_sampler, num_workers=num_workers, pin_memory=True)
+            
+            val_dataloader = torch.utils.data.DataLoader(data_val, batch_size=100, shuffle=False, num_workers=4, pin_memory=True)
+            test_dataloader = torch.utils.data.DataLoader(data_test, batch_size=100, shuffle=False, num_workers=4, pin_memory=True)
+            
+            return train_dataloader, val_dataloader, test_dataloader, len(data_test.classes)
+        
         train_dataloader = torch.utils.data.DataLoader(data_train, batch_size=batch_size, shuffle=True, num_workers=num_workers, pin_memory=True, drop_last=True)
         val_dataloader = torch.utils.data.DataLoader(data_val, batch_size=100, shuffle=False, num_workers=4, pin_memory=True)
         test_dataloader = torch.utils.data.DataLoader(data_test, batch_size=100, shuffle=False, num_workers=4, pin_memory=True)
         
         return train_dataloader, val_dataloader, test_dataloader, len(data_test.classes)
     else:
+        if num_classes_per_batch:
+            samples_per_class = batch_size // num_classes_per_batch
+            
+            data_train = CIFAR100Noisy(root='./data', train=True, download=True, transform=transform_train, noise_rate=noise, noise_type=noise_type, data_size=data_size)
+            train_sampler = ClassBalancedBatchSampler(data_train, num_classes_per_batch, samples_per_class, drop_last=True)
+            train_dataloader = torch.utils.data.DataLoader(data_train, batch_sampler=train_sampler, num_workers=num_workers, pin_memory=True)
+            
+            data_test = torchvision.datasets.CIFAR100(root='./data', train=False, download=True, transform=transform_test)
+            test_dataloader = torch.utils.data.DataLoader(data_test, batch_size=100, shuffle=False, num_workers=4, pin_memory=True)
+            
+            return train_dataloader, test_dataloader, len(data_test.classes)
+        
         data_train = CIFAR100Noisy(root='./data', train=True, download=True, transform=transform_train, noise_rate=noise, noise_type=noise_type, data_size=data_size)
         data_test = torchvision.datasets.CIFAR100(root='./data', train=False, download=True, transform=transform_test)
         

@@ -15,11 +15,12 @@ def get_dataloader(
     data_augmentation="standard",
     data_size=1,
     use_val=False,
+    num_classes_per_batch=None
 ):
     print('==> Preparing data..')
 
     if data_name == "cifar100":
-        return get_cifar100(batch_size, num_workers, noise, noise_type, data_augmentation, data_size=data_size, use_val=use_val)
+        return get_cifar100(batch_size, num_workers, noise, noise_type, data_augmentation, data_size=data_size, use_val=use_val, num_classes_per_batch=num_classes_per_batch)
     elif data_name == "cifar10":
         return get_cifar10(batch_size, num_workers, noise, noise_type, data_augmentation, data_size=data_size, use_val=use_val)
     elif data_name == "miniwebvision":
