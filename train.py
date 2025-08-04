@@ -61,7 +61,8 @@ print(f'==> Number of parameters in {cfg["model"]}: {total_params}')
 ################################
 criterion = nn.CrossEntropyLoss()
 opt_name = cfg['optimizer'].pop('opt_name', None)
-optimizer = get_optimizer(net, opt_name, cfg['optimizer'])
+last_linear_param_ids = get_last_linear_params(net)
+optimizer = get_optimizer(net, opt_name, last_linear_param_ids, cfg['optimizer'])
 
 if scheduler == 'cosine':
     scheduler = torch.optim.lr_scheduler.CosineAnnealingLR(optimizer, T_max=EPOCHS)

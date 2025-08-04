@@ -11,10 +11,13 @@ from .gsam import GSAM
 from .gsamean import GSAMEAN
 from .samabs import SAMABS
 from .samba import SAMBA
+from .saner_last import SANERLAST
+from .samba_last import SAMBALAST
 
 def get_optimizer(
     net,
     opt_name='sam',
+    last_linear_param_ids=None,
     opt_hyperpara={}):
     if opt_name == 'sam':
         return SAM(net.parameters(), **opt_hyperpara)
@@ -42,5 +45,13 @@ def get_optimizer(
         return GSAM(net.parameters(), **opt_hyperpara)
     elif opt_name == 'gsamean':
         return GSAMEAN(net.parameters(), **opt_hyperpara)
+    elif opt_name == 'sanerlast':
+        if last_linear_param_ids is None:
+            raise ValueError("last_linear_param_ids must be provided for SANERLAST optimizer")
+        return SANERLAST(net.parameters(), last_linear_param_ids=last_linear_param_ids, **opt_hyperpara)
+    elif opt_name == 'sambalast':
+        if last_linear_param_ids is None:
+            raise ValueError("last_linear_param_ids must be provided for SAMBALAST optimizer")
+        return SAMBALAST(net.parameters(), last_linear_param_ids=last_linear_param_ids, **opt_hyperpara)
     else:
         raise ValueError("Invalid optimizer!!!")
