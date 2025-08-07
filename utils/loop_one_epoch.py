@@ -25,18 +25,16 @@ def loop_one_epoch(
     noise_total = 0
     noise_correct = 0
     noise_acc, clean_acc = 0, 0
-    
+    noise_B_cosine_score = []
     if loop_type == 'train': 
         net.train()
         for batch_idx, batch in enumerate(dataloader):
-            if len(batch) == 2:
-                inputs, targets = batch
-                inputs, targets = inputs.to(device), targets.to(device)
-            elif len(batch) == 3:
-                inputs, targets, noise_masks = batch
-                inputs, targets, noise_masks = inputs.to(device), targets.to(device), noise_masks.to(device)
+            inputs, targets, noise_masks = batch
+            inputs, targets, noise_masks = inputs.to(device), targets.to(device), noise_masks.to(device)
                 
-            opt_name = type(optimizer).__name__
+            noise_inputs, noise_targets = inputs[noise_masks == 1], targets[noise_masks == 1]
+                
+            opt_name = type (optimizer).__name__
             if opt_name == 'SGD':
                 outputs = net(inputs)
                 first_loss = criterion(outputs, targets)
@@ -46,6 +44,16 @@ def loop_one_epoch(
             else:
                 enable_running_stats(net)  # <- this is the important line
                 outputs = net(inputs)
+                
+                if (batch_idx + 1) % 8 == 0:
+                    noise_outputs = outputs[noise_masks]
+                    noise_targets = targets[noise_masks]
+                    
+                    num_noise_examples = noise_inputs.shape[0]
+                    noise_loss = criterion(noise_outputs, noise_targets) * (num_noise_examples/128)
+                    noise_loss.backward(retain_graph=True)
+                    noise_grads = get_gradients(optimizer)
+                
                 optimizer.zero_grad()
                 first_loss = criterion(outputs, targets)
                 first_loss.backward()        
@@ -53,6 +61,20 @@ def loop_one_epoch(
                 
                 disable_running_stats(net)  # <- this is the important line
                 criterion(net(inputs), targets).backward()
+                
+                if (batch_idx + 1) % 8 == 0:
+                    B_grads, _ = get_grads_and_masks_at_group(optimizer)
+                    cosine_score = []
+                    for B_grad, noise_grad in zip(B_grads, noise_grads):
+                        cosine_score.append(cosine_similarity(B_grad, noise_grad))
+                    noise_B_cosine_score.append(np.mean(cosine_score))
+                    
+                if (batch_idx + 1) % len(dataloader) == 0:
+                    logging_dict.update(get_checkpoint(optimizer))
+
+                    logging_dict.update({
+                        'prop/noise_B_cosine_score': np.mean(noise_B_cosine_score),
+                    })
                 optimizer.second_step(zero_grad=True)
                 
             with torch.no_grad():

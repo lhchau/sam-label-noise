@@ -60,23 +60,18 @@ class HardBootstrappingLoss(nn.Module):
             return torch.mean(beta_xentropy + bootstrap)
         return beta_xentropy + bootstrap
 
-def get_grads_and_masks_at_group(optimizer, gr='B', alpha=1):
+def get_grads_and_masks_at_group(optimizer):
     grads, masks = [], []
     for group in optimizer.param_groups:
         for p in group["params"]:
             if p.grad is None: continue
             param_state = optimizer.state[p]
             
-            ratio = p.grad.div(param_state['first_grad'].add(1e-8))
-            
-            if gr == 'A':
-                mask = ratio > alpha
-            elif gr == 'B':
-                mask = torch.logical_and(ratio < alpha, ratio > 0)
-            else:
-                mask = ratio <= 0
-            masks.append(mask)
-            grads.append(param_state['first_grad'].mul(mask))
+            if id(p) in optimizer.last_linear_param_ids:
+                ratio = p.grad.div(param_state['first_grad'].add(1e-12))
+                mask = torch.logical_and(ratio < 1, ratio > 0)
+                masks.append(mask)
+                grads.append(param_state['first_grad'].mul(mask))
     return grads, masks
 
 def get_mask_A_B_same_or_diff_sign(grads_A, grads_B, sign='same'):
@@ -127,40 +122,24 @@ def get_gradients(optimizer):
     for group in optimizer.param_groups:
         for p in group["params"]:
             if p.grad is None: continue
-            grads.append(p.grad.clone())
+            if id(p) in optimizer.last_linear_param_ids:
+                grads.append(p.grad.clone())
     return grads
 
-def get_norm(optimizer):
-    logging_dict = {}
-    if hasattr(optimizer, 'first_grad_norm'):
-        logging_dict['first_grad_norm'] = optimizer.first_grad_norm
-    if hasattr(optimizer, 'second_grad_norm'):
-        logging_dict['second_grad_norm'] = optimizer.second_grad_norm
-    if hasattr(optimizer, 'd_t_grad_norm'):
-        logging_dict['d_t_grad_norm'] = optimizer.d_t_grad_norm
-    return logging_dict
-    
-def get_checkpoint(optimizer, stored_info=[]):
+def get_checkpoint(optimizer):
     num_para_a, num_para_b, num_para_c, total_para = 0, 0, 0, 0
-    if len(stored_info):
-        ratios = []
     for group in optimizer.param_groups:
         for p in group["params"]:
             if p.grad is None: continue
             param_state = optimizer.state[p]
-            total_para += p.numel()
             
-            ratio = p.grad.div(param_state['first_grad'].add(1e-8))
-            if len(stored_info):
-                ratios.append(ratio)
-            num_para_a += torch.sum( ratio > 1 )
-            num_para_b += torch.sum( torch.logical_and( ratio < 1, ratio > 0) )
-            num_para_c += torch.sum( ratio <= 0)
-    if len(stored_info):
-        epoch = stored_info[0]
-        if (epoch + 1) % 10 == 0:
-            with open(f'./stored/ratios_epoch{epoch}.pkl', 'wb') as f:
-                pickle.dump(ratios, f)
+            if id(p) in optimizer.last_linear_param_ids:
+                ratio = p.grad.div(param_state['first_grad'].add(1e-12))
+                
+                total_para += p.numel()
+                num_para_a += torch.sum( ratio >= 1 )
+                num_para_b += torch.sum( torch.logical_and( ratio < 1, ratio > 0) )
+                num_para_c += torch.sum( ratio <= 0)
     return  {
         'num_para_a': (num_para_a / total_para) * 100, 
         'num_para_b': (num_para_b / total_para) * 100,
