@@ -78,6 +78,8 @@ def loop_one_epoch(
 
                     logging_dict.update({
                         'prop/noise_B_cosine_score': np.mean(noise_B_cosine_score),
+                        'prop/norm_grad_B': np.mean(norm_grad_B),
+                        'prop/norm_noise_grad': np.mean(norm_noise_grad),
                     })
                 optimizer.second_step(zero_grad=True)
                 
