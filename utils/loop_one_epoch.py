@@ -25,7 +25,7 @@ def loop_one_epoch(
     noise_total = 0
     noise_correct = 0
     noise_acc, clean_acc = 0, 0
-    noise_B_cosine_score = []
+    noise_B_cosine_score, norm_grad_B, norm_noise_grad = [], [], []
     if loop_type == 'train': 
         net.train()
         for batch_idx, batch in enumerate(dataloader):
@@ -64,11 +64,17 @@ def loop_one_epoch(
                 
                 if (batch_idx + 1) % 8 == 0:
                     B_grads, _ = get_grads_and_masks_at_group(optimizer)
-                    cosine_score = []
-                    for B_grad, noise_grad in zip(B_grads, noise_grads):
-                        cosine_score.append(cosine_similarity(B_grad, noise_grad))
-                    noise_B_cosine_score.append(np.mean(cosine_score))
-                    
+                    for grad1, grad2 in zip(B_grads, noise_grads):
+                        dot_product = torch.sum(grad1 * grad2)
+                        norm_grad1 = torch.norm(grad1)
+                        norm_grad2 = torch.norm(grad2)
+                        similarity = dot_product / (norm_grad1 * norm_grad2 + 1e-18)
+
+                        norm_grad_B.append(norm_grad1.item())
+                        norm_noise_grad.append(norm_grad2.item())
+                        noise_B_cosine_score.append(similarity.item())
+                    if epoch == 1:
+                        breakpoint()
                 if (batch_idx + 1) % len(dataloader) == 0:
                     logging_dict.update(get_checkpoint(optimizer))
 
