@@ -73,8 +73,6 @@ def loop_one_epoch(
                         norm_grad_B.append(norm_grad1.item())
                         norm_noise_grad.append(norm_grad2.item())
                         noise_B_cosine_score.append(similarity.item())
-                    if epoch == 1:
-                        breakpoint()
                 if (batch_idx + 1) % len(dataloader) == 0:
                     logging_dict.update(get_checkpoint(optimizer))
 
