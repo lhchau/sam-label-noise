@@ -17,7 +17,7 @@ import torch.nn.functional as F
 def get_last_linear_params(model):
     for module in reversed(list(model.modules())):
         if isinstance(module, torch.nn.Linear):
-            return {id(module.weight)}
+            return set({id(module.weight)})
     return set()
 
 def cosine_similarity(grad1, grad2):
