@@ -52,7 +52,9 @@ def loop_one_epoch(
                 # Extra noise gradient logging every 8 batches
                 if (batch_idx + 1) % 8 == 0:
                     noise_outputs = outputs[noise_masks]
-                    noise_loss = criterion(noise_outputs, noise_targets)
+                    batch_size = outputs.shape[0]
+                    num_noise = noise_inputs.shape[0]
+                    noise_loss = criterion(noise_outputs, noise_targets) * (num_noise / batch_size)
                     noise_loss.backward(retain_graph=True)
                     noise_grads = get_gradients(optimizer)
 

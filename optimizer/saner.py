@@ -2,12 +2,11 @@ import torch
 
 
 class SANER(torch.optim.Optimizer):
-    def __init__(self, params, rho=0.05, adaptive=False, group="B", condition=0., **kwargs):
+    def __init__(self, params, rho=0.05, adaptive=False, condition=0., **kwargs):
         assert rho >= 0.0, f"Invalid rho, should be non-negative: {rho}"
 
         defaults = dict(rho=rho, adaptive=adaptive, **kwargs)
         super(SANER, self).__init__(params, defaults)
-        self.group = group
         self.condition = condition
         
     @torch.no_grad()
@@ -39,13 +38,8 @@ class SANER(torch.optim.Optimizer):
                 p.sub_(param_state['e_w'])  # get back to "w" from "w + e(w)"
                 
                 ratio = p.grad.div(param_state['first_grad'].add(1e-8))
-                if self.group == "A":
-                    mask = ratio >= 1
-                elif self.group == "B":
-                    mask = torch.logical_and(ratio > 0, ratio < 1)
-                    self.num_group += torch.sum(mask).item()
-                elif self.group == "C":
-                    mask = ratio <= 0
+                mask = torch.logical_and(ratio > 0, ratio < 1)
+                self.num_group += torch.sum(mask).item()
                 
                 d_p = p.grad.mul(mask).mul(self.condition) + p.grad.mul(torch.logical_not(mask))
                 if weight_decay != 0:

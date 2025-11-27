@@ -64,11 +64,10 @@ def get_grads_and_masks_at_group(optimizer):
             if p.grad is None: continue
             param_state = optimizer.state[p]
             
-            if id(p) in optimizer.last_linear_param_ids:
-                ratio = p.grad.div(param_state['first_grad'].add(1e-12))
-                mask = torch.logical_and(ratio < 1, ratio > 0)
-                masks.append(mask)
-                grads.append(param_state['first_grad'].mul(mask))
+            ratio = p.grad.div(param_state['first_grad'].add(1e-12))
+            mask = torch.logical_and(ratio < 1, ratio > 0)
+            masks.append(mask)
+            grads.append(param_state['first_grad'].mul(mask))
     return grads, masks
 
 def get_mask_A_B_same_or_diff_sign(grads_A, grads_B, sign='same'):
