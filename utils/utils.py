@@ -118,8 +118,7 @@ def get_gradients(optimizer):
     for group in optimizer.param_groups:
         for p in group["params"]:
             if p.grad is None: continue
-            if id(p) in optimizer.last_linear_param_ids:
-                grads.append(p.grad.clone())
+            grads.append(p.grad.clone())
     return grads
 
 def get_checkpoint(optimizer):
@@ -129,13 +128,12 @@ def get_checkpoint(optimizer):
             if p.grad is None: continue
             param_state = optimizer.state[p]
             
-            if id(p) in optimizer.last_linear_param_ids:
-                ratio = p.grad.div(param_state['first_grad'].add(1e-12))
+            ratio = p.grad.div(param_state['first_grad'].add(1e-12))
                 
-                total_para += p.numel()
-                num_para_a += torch.sum( ratio >= 1 )
-                num_para_b += torch.sum( torch.logical_and( ratio < 1, ratio > 0) )
-                num_para_c += torch.sum( ratio <= 0)
+            total_para += p.numel()
+            num_para_a += torch.sum( ratio >= 1 )
+            num_para_b += torch.sum( torch.logical_and( ratio < 1, ratio > 0) )
+            num_para_c += torch.sum( ratio <= 0)
     return  {
         'num_para_a': (num_para_a / total_para) * 100, 
         'num_para_b': (num_para_b / total_para) * 100,
