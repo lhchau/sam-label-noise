@@ -2,7 +2,7 @@ from torch.optim import SGD
 from .sam import SAM
 from .samonly import SAMONLY
 from .samwo import SAMWO
-from .schedulersamean import SCHEDULERSAMEAN
+from .saner import SANER
 from .fsam import FriendlySAM
 from .fsamean import FriendlySAMEAN
 from .vasso import VASSO
@@ -20,15 +20,15 @@ def get_optimizer(
     last_linear_param_ids=None,
     opt_hyperpara={}):
     if opt_name == 'sam':
-        return SAM(net.parameters(), last_linear_param_ids=last_linear_param_ids, **opt_hyperpara)
+        return SAM(net.parameters, **opt_hyperpara)
     elif opt_name == 'sgd':
         return SGD(net.parameters(), **opt_hyperpara)
     elif opt_name == 'samonly':
         return SAMONLY(net.parameters(), **opt_hyperpara)
     elif opt_name == 'samwo':
         return SAMWO(net.parameters(), **opt_hyperpara)
-    elif opt_name == 'schedulersamean':
-        return SCHEDULERSAMEAN(net.parameters(), **opt_hyperpara)
+    elif opt_name == 'saner':
+        return SANER(net.parameters(), **opt_hyperpara)
     elif opt_name == 'samabs':
         return SAMABS(net.parameters(), **opt_hyperpara)
     elif opt_name == 'samba':

@@ -1,12 +1,12 @@
 import torch
 
 
-class SCHEDULERSAMEAN(torch.optim.Optimizer):
-    def __init__(self, params, rho=0.05, adaptive=False, group="B", condition=1, **kwargs):
+class SANER(torch.optim.Optimizer):
+    def __init__(self, params, rho=0.05, adaptive=False, group="B", condition=0., **kwargs):
         assert rho >= 0.0, f"Invalid rho, should be non-negative: {rho}"
 
         defaults = dict(rho=rho, adaptive=adaptive, **kwargs)
-        super(SCHEDULERSAMEAN, self).__init__(params, defaults)
+        super(SANER, self).__init__(params, defaults)
         self.group = group
         self.condition = condition
         
@@ -28,6 +28,7 @@ class SCHEDULERSAMEAN(torch.optim.Optimizer):
 
     @torch.no_grad()
     def second_step(self, zero_grad=False):
+        self.num_group = 0
         for group in self.param_groups:
             weight_decay = group["weight_decay"]
             step_size = group['lr']
@@ -42,6 +43,7 @@ class SCHEDULERSAMEAN(torch.optim.Optimizer):
                     mask = ratio >= 1
                 elif self.group == "B":
                     mask = torch.logical_and(ratio > 0, ratio < 1)
+                    self.num_group += torch.sum(mask).item()
                 elif self.group == "C":
                     mask = ratio <= 0
                 

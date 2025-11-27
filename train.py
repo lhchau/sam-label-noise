@@ -24,12 +24,14 @@ best_acc, start_epoch, logging_dict = 0, 0, {}
 
 EPOCHS = cfg['trainer']['epochs'] 
 resume = cfg['trainer'].get('resume', None)
+alpha_scheduler = cfg['trainer'].get('alpha_scheduler', None)
 # patience = cfg['trainer'].get('patience', 20)
 scheduler = cfg['trainer'].get('scheduler', None)
 use_val = cfg['dataloader'].get('use_val', False)
 
 print('==> Initialize Logging Framework..')
 logging_name = get_logging_name(cfg)
+logging_name += f'_k={alpha_scheduler}'
 logging_name += ('_' + current_time)
 
 framework_name = cfg['logging']['framework_name']
@@ -61,8 +63,7 @@ print(f'==> Number of parameters in {cfg["model"]}: {total_params}')
 ################################
 criterion = nn.CrossEntropyLoss()
 opt_name = cfg['optimizer'].pop('opt_name', None)
-last_linear_param_ids = get_last_linear_params(net)
-optimizer = get_optimizer(net, opt_name, last_linear_param_ids, cfg['optimizer'])
+optimizer = get_optimizer(net, opt_name, cfg['optimizer'])
 
 if scheduler == 'cosine':
     scheduler = torch.optim.lr_scheduler.CosineAnnealingLR(optimizer, T_max=EPOCHS)
@@ -81,6 +82,9 @@ if __name__ == "__main__":
             scheduler.step()
     for epoch in range(start_epoch+1, EPOCHS+1):
         print('\nEpoch: %d' % epoch)
+        if alpha_scheduler:
+            optimizer.set_alpha(get_alpha(epoch, initial_alpha=1, final_alpha=cfg['optimizer']['condition'], total_epochs=alpha_scheduler))
+
         loop_one_epoch(
             dataloader=train_dataloader,
             net=net,
