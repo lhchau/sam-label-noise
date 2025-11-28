@@ -19,7 +19,7 @@ def get_optimizer(
     opt_name='sam',
     opt_hyperpara={}):
     if opt_name == 'sam':
-        return SAM(net.parameters, **opt_hyperpara)
+        return SAM(net.parameters(), **opt_hyperpara)
     elif opt_name == 'sgd':
         return SGD(net.parameters(), **opt_hyperpara)
     elif opt_name == 'samonly':
