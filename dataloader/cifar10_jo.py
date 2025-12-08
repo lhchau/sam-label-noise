@@ -27,8 +27,8 @@ class CIFAR10Noisy_JO(torchvision.datasets.CIFAR10):
         if self.train:
             self._apply_noise(noise_type)
             
-        self.soft_labels = np.zeros((len(self.train_data), 10), dtype=np.float32)
-        self.prediction = np.zeros((len(self.train_data), 10, 10), dtype=np.float32)
+        self.soft_labels = np.zeros((len(self.data), 10), dtype=np.float32)
+        self.prediction = np.zeros((len(self.data), 10, 10), dtype=np.float32)
         
         self.count = 0
 
@@ -77,7 +77,7 @@ class CIFAR10Noisy_JO(torchvision.datasets.CIFAR10):
                 elif noise_type == 'dependent':
                     new_label = self.noise_label_gen.generate_dependent_labels(self.data[idx], current_label)
                 self.noisy_labels[idx] = new_label
-            indices = np.random.permutation(len(self.train_data))
+            indices = np.random.permutation(len(self.data))
             for _, idx in enumerate(indices):
                 self.soft_labels[idx][self.noisy_labels[idx]] = 1.0
 
@@ -107,12 +107,12 @@ class CIFAR10Noisy_JO(torchvision.datasets.CIFAR10):
             self.noisy_labels = np.argmax(self.soft_labels, axis=1).astype(np.int64)
 
         if self.count == 200:
-            np.save(f'labels/images.npy', self.train_data)
-            np.save(f'labels/labels.npy', self.train_labels)
+            np.save(f'labels/images.npy', self.data)
+            np.save(f'labels/labels.npy', self.noisy_labels)
             np.save(f'labels/soft_labels.npy', self.soft_labels)
     
     def reload_label(self):
-        self.train_data = np.load(f'labels/images.npy')
+        self.data = np.load(f'labels/images.npy')
         self.noisy_labels = np.load(f'labels/labels.npy')
         self.soft_labels = np.load(f'labels/soft_labels.npy')
  
