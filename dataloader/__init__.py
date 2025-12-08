@@ -3,6 +3,8 @@ from .cifar10 import get_cifar10
 from .miniwebsion import get_miniwebvision
 from .animal10n import get_animal10n
 from .tiny_imagenet import get_tiny_imagenet
+from .cifar10_jo import get_cifar10_jo
+from .cifar100_jo import get_cifar100_jo
 
 # Data
 def get_dataloader(
@@ -23,6 +25,10 @@ def get_dataloader(
         return get_cifar100(batch_size, num_workers, noise, noise_type, data_augmentation, data_size=data_size, use_val=use_val, samples_per_class=samples_per_class)
     elif data_name == "cifar10":
         return get_cifar10(batch_size, num_workers, noise, noise_type, data_augmentation, data_size=data_size, use_val=use_val)
+    elif data_name == "cifar10_jo":
+        return get_cifar10_jo(batch_size, num_workers, noise, noise_type, data_augmentation, data_size=data_size, use_val=use_val)
+    elif data_name == "cifar100_jo":
+        return get_cifar100_jo(batch_size, num_workers, noise, noise_type, data_augmentation, data_size=data_size, use_val=use_val)
     elif data_name == "miniwebvision":
         return get_miniwebvision(batch_size, num_workers, resize_image)
     elif data_name == "tiny_imagenet":
