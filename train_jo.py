@@ -42,6 +42,7 @@ elif framework_name == 'tensorboard':
     writer = SummaryWriter(log_dir=tb_log_dir)
 pprint.pprint(cfg)
 
+os.makedirs('labels', exist_ok=True)
 ################################
 #### 1. BUILD THE DATASET
 ################################

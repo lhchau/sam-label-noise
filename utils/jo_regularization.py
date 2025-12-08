@@ -2,7 +2,9 @@ import torch
 import torch.nn.functional as F
 
 def jo_criterion(outputs, soft_targets, alpha=1.2, beta=0.8):
-    p = torch.ones(10).cuda() / 10
+    _, C = outputs.size()
+    
+    p = torch.ones(C, device=outputs.device) / C
 
     probs = F.softmax(outputs, dim=1)
     avg_probs = torch.mean(probs, dim=0)

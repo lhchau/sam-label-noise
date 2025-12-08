@@ -98,7 +98,7 @@ class CIFAR100Noisy_JO(torchvision.datasets.CIFAR100):
         idx = (self.count - 1) % 10
         self.prediction[:, idx] = results
 
-        if self.count >= 105:
+        if self.count >= 103:
             self.soft_labels = self.prediction.mean(axis=1)
             self.noisy_labels = np.argmax(self.soft_labels, axis=1).astype(np.int64)
 

@@ -103,9 +103,9 @@ def loop_one_epoch_jo(
             dataloader.dataset.label_update(results)
 
         # Save noise/clean accuracies
-        logging_dict[f"{loop_type.title()}/noise_acc"] = noise_acc
-        logging_dict[f"{loop_type.title()}/clean_acc"] = clean_acc
-        logging_dict[f"{loop_type.title()}/gap_clean_noise_acc"] = clean_acc - noise_acc
+        logging_dict[f"Train/noise_acc"] = noise_acc
+        logging_dict[f"Train/clean_acc"] = clean_acc
+        logging_dict[f"Train/gap_clean_noise_acc"] = clean_acc - noise_acc
 
     # --- Testing phase ---
     elif loop_type == "test":
@@ -368,8 +368,12 @@ def loop_one_epoch(
                                  f"Loss: {loss_mean:.3f} | Acc: {acc:.3f}% ({correct}/{total})")
 
     # Final logging
-    logging_dict[f"{loop_type.title()}/loss"] = loss_mean
-    logging_dict[f"{loop_type.title()}/acc"] = acc
+    if loop_type == 'retrain':
+        logging_dict[f"Train/loss"] = loss_mean
+        logging_dict[f"Train/acc"] = acc
+    else:
+        logging_dict[f"{loop_type.title()}/loss"] = loss_mean
+        logging_dict[f"{loop_type.title()}/acc"] = acc
 
     if loop_type == "test":
         return best_acc, acc
