@@ -175,8 +175,12 @@ def loop_one_epoch_jo(
                                  f"Loss: {loss_mean:.3f} | Acc: {acc:.3f}% ({correct}/{total})")
 
     # Final logging
-    logging_dict[f"{loop_type.title()}/loss"] = loss_mean
-    logging_dict[f"{loop_type.title()}/acc"] = acc
+    if loop_type == 'retrain':
+        logging_dict[f"Train/loss"] = loss_mean
+        logging_dict[f"Train/acc"] = acc
+    else:
+        logging_dict[f"{loop_type.title()}/loss"] = loss_mean
+        logging_dict[f"{loop_type.title()}/acc"] = acc
 
     if loop_type == "test":
         return best_acc, acc
