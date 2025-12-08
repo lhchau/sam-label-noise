@@ -20,14 +20,14 @@ class CIFAR100Noisy_JO(torchvision.datasets.CIFAR100):
         
         self.noisy_labels = self.targets.copy()  # Copy the original labels
         
+        self.soft_labels = np.zeros((len(self.data), 10), dtype=np.float32)
+        self.prediction = np.zeros((len(self.data), 10, 10), dtype=np.float32)
+        
         if noise_type == 'dependent':
             self.noise_label_gen = DependentLabelGenerator(self.num_classes, 32 * 32 * 3, transform) 
         if self.train:
             self._apply_noise(noise_type)
             
-        self.soft_labels = np.zeros((len(self.data), 10), dtype=np.float32)
-        self.prediction = np.zeros((len(self.data), 10, 10), dtype=np.float32)
-        
         self.count = 0
             
     def get_smaller_dataset(self, data_size):
