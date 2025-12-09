@@ -76,7 +76,7 @@ elif scheduler == 'tiny_imagenet':
     scheduler = torch.optim.lr_scheduler.MultiStepLR(optimizer, milestones=[40, 80])
 else:
     scheduler = torch.optim.lr_scheduler.MultiStepLR(optimizer, milestones=[int(EPOCHS * 0.5), int(EPOCHS * 0.75)])
-early_stopping = EarlyStopping(patience=20)
+# early_stopping = EarlyStopping(patience=20)
 
 ################################
 #### 3.b Training 
@@ -120,7 +120,7 @@ if __name__ == "__main__":
             for metric_name, metric_value in logging_dict.items():
                 writer.add_scalar(metric_name, metric_value, epoch)
                 
-        if (epoch + 1) > 100:
-            early_stopping(acc)
-            if early_stopping.early_stop:
-                break
+        # if (epoch + 1) > 100:
+        #     early_stopping(acc)
+        #     if early_stopping.early_stop:
+        #         break
