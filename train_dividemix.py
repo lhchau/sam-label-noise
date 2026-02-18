@@ -149,19 +149,19 @@ if __name__ == "__main__":
                 tag="net2",
             )
 
-        # ---- test net1 (or ensemble if you want) ----
-        best_acc, acc = loop_one_epoch(
-            dataloader=test_dataloader,
-            net=net1,
-            criterion=criterion_sup,
-            optimizer=optimizer1,
-            device=device,
-            logging_dict=logging_dict,
-            epoch=epoch,
-            loop_type='test',
-            logging_name=logging_name,
-            best_acc=best_acc
-        )
+            # ---- test net1 (or ensemble if you want) ----
+            best_acc, acc = loop_one_epoch(
+                dataloader=test_dataloader,
+                net=net1,
+                criterion=criterion_sup,
+                optimizer=optimizer1,
+                device=device,
+                logging_dict=logging_dict,
+                epoch=epoch,
+                loop_type='test',
+                logging_name=logging_name,
+                best_acc=best_acc
+            )
 
         if scheduler1 is not None:
             scheduler1.step()
