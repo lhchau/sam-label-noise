@@ -105,7 +105,7 @@ def get_real_world_cifar(dataset="cifar10"):
         noisy_label = noise_label['noisy_label']
     return noisy_label
  
-def get_cifar10(
+def get_cifar10_index(
     batch_size=128,
     num_workers=4,
     noise=0.25,

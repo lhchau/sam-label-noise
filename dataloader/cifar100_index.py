@@ -103,7 +103,7 @@ def get_real_world_cifar(dataset="cifar10"):
     return noisy_label
  
 
-def get_cifar100(
+def get_cifar100_index(
     batch_size=128,
     num_workers=4,
     noise=0.25,
