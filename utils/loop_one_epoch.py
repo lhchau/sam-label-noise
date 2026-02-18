@@ -749,16 +749,29 @@ def loop_one_epoch_warmup(dataloader, net, optimizer, device, criterion, logging
 
 
         inputs, targets = inputs.to(device), targets.to(device)
-        logits = net(inputs)
-        loss = criterion(logits, targets)
+        
+        opt_name = type(optimizer).__name__
+        if opt_name == "SGD":
+            outputs = net(inputs)
+            first_loss = criterion(outputs, targets)
+            first_loss.backward()
+            optimizer.step()
+            optimizer.zero_grad()
+        else:
+            enable_running_stats(net)
+            outputs = net(inputs)
+            optimizer.zero_grad()
+            first_loss = criterion(outputs, targets)
+            first_loss.backward()
+            optimizer.first_step(zero_grad=True)
 
-        optimizer.zero_grad()
-        loss.backward()
-        optimizer.step()
+            disable_running_stats(net)
+            criterion(net(inputs), targets).backward()
+            optimizer.second_step(zero_grad=True)
 
         with torch.no_grad():
-            loss_sum += loss.item()
-            _, pred = logits.max(1)
+            loss_sum += first_loss.item()
+            _, pred = outputs.max(1)
             total += targets.size(0)
             correct += pred.eq(targets).sum().item()
 
