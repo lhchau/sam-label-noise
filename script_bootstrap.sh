@@ -7,7 +7,7 @@ python train_bootstrap.py config/train_sgd.yaml \
   --dataloader.samples_per_class=None \
   --trainer.seed=42 \
   --logging.framework_name=wandb \
-  --logging.project_name=cifar10-sam-noise-co-teaching
+  --logging.project_name=cifar10-sam-noise-bootstrap
 
 python train_bootstrap.py config/train_sgd.yaml \
   --optimizer.opt_name=sgd \
@@ -18,7 +18,7 @@ python train_bootstrap.py config/train_sgd.yaml \
   --dataloader.samples_per_class=None \
   --trainer.seed=43 \
   --logging.framework_name=wandb \
-  --logging.project_name=cifar10-sam-noise-co-teaching
+  --logging.project_name=cifar10-sam-noise-bootstrap
 
 python train_bootstrap.py config/train_sgd.yaml \
   --optimizer.opt_name=sgd \
@@ -29,7 +29,7 @@ python train_bootstrap.py config/train_sgd.yaml \
   --dataloader.samples_per_class=None \
   --trainer.seed=44 \
   --logging.framework_name=wandb \
-  --logging.project_name=cifar10-sam-noise-co-teaching
+  --logging.project_name=cifar10-sam-noise-bootstrap
 
 python train_bootstrap.py config/train_sgd.yaml \
   --optimizer.opt_name=sgd \
@@ -40,7 +40,7 @@ python train_bootstrap.py config/train_sgd.yaml \
   --dataloader.samples_per_class=None \
   --trainer.seed=42 \
   --logging.framework_name=wandb \
-  --logging.project_name=cifar10-sam-noise-co-teaching
+  --logging.project_name=cifar10-sam-noise-bootstrap
 
 python train_bootstrap.py config/train_sgd.yaml \
   --optimizer.opt_name=sgd \
@@ -51,7 +51,7 @@ python train_bootstrap.py config/train_sgd.yaml \
   --dataloader.samples_per_class=None \
   --trainer.seed=43 \
   --logging.framework_name=wandb \
-  --logging.project_name=cifar10-sam-noise-co-teaching
+  --logging.project_name=cifar10-sam-noise-bootstrap
 
 python train_bootstrap.py config/train_sgd.yaml \
   --optimizer.opt_name=sgd \
@@ -62,7 +62,7 @@ python train_bootstrap.py config/train_sgd.yaml \
   --dataloader.samples_per_class=None \
   --trainer.seed=44 \
   --logging.framework_name=wandb \
-  --logging.project_name=cifar10-sam-noise-co-teaching
+  --logging.project_name=cifar10-sam-noise-bootstrap
 
 python train_bootstrap.py config/train_sam.yaml \
   --optimizer.opt_name=sam \
@@ -74,7 +74,7 @@ python train_bootstrap.py config/train_sam.yaml \
   --dataloader.samples_per_class=None \
   --trainer.seed=42 \
   --logging.framework_name=wandb \
-  --logging.project_name=cifar10-sam-noise-co-teaching
+  --logging.project_name=cifar10-sam-noise-bootstrap
 
 python train_bootstrap.py config/train_sam.yaml \
   --optimizer.opt_name=sam \
@@ -86,7 +86,7 @@ python train_bootstrap.py config/train_sam.yaml \
   --dataloader.samples_per_class=None \
   --trainer.seed=43 \
   --logging.framework_name=wandb \
-  --logging.project_name=cifar10-sam-noise-co-teaching
+  --logging.project_name=cifar10-sam-noise-bootstrap
 
 python train_bootstrap.py config/train_sam.yaml \
   --optimizer.opt_name=sam \
@@ -98,7 +98,7 @@ python train_bootstrap.py config/train_sam.yaml \
   --dataloader.samples_per_class=None \
   --trainer.seed=44 \
   --logging.framework_name=wandb \
-  --logging.project_name=cifar10-sam-noise-co-teaching
+  --logging.project_name=cifar10-sam-noise-bootstrap
 
 
 python train_bootstrap.py config/train_sam.yaml \
@@ -111,7 +111,7 @@ python train_bootstrap.py config/train_sam.yaml \
   --dataloader.samples_per_class=None \
   --trainer.seed=42 \
   --logging.framework_name=wandb \
-  --logging.project_name=cifar10-sam-noise-co-teaching
+  --logging.project_name=cifar10-sam-noise-bootstrap
 
 python train_bootstrap.py config/train_sam.yaml \
   --optimizer.opt_name=sam \
@@ -123,7 +123,7 @@ python train_bootstrap.py config/train_sam.yaml \
   --dataloader.samples_per_class=None \
   --trainer.seed=43 \
   --logging.framework_name=wandb \
-  --logging.project_name=cifar10-sam-noise-co-teaching
+  --logging.project_name=cifar10-sam-noise-bootstrap
 
 python train_bootstrap.py config/train_sam.yaml \
   --optimizer.opt_name=sam \
@@ -135,7 +135,7 @@ python train_bootstrap.py config/train_sam.yaml \
   --dataloader.samples_per_class=None \
   --trainer.seed=44 \
   --logging.framework_name=wandb \
-  --logging.project_name=cifar10-sam-noise-co-teaching
+  --logging.project_name=cifar10-sam-noise-bootstrap
 
 
 ####
@@ -151,7 +151,7 @@ python train_bootstrap.py config/train_sam.yaml \
   --dataloader.samples_per_class=None \
   --trainer.seed=42 \
   --logging.framework_name=wandb \
-  --logging.project_name=cifar10-sam-noise-co-teaching
+  --logging.project_name=cifar10-sam-noise-bootstrap
 
 python train_bootstrap.py config/train_sam.yaml \
   --optimizer.opt_name=sam \
@@ -165,7 +165,7 @@ python train_bootstrap.py config/train_sam.yaml \
   --dataloader.samples_per_class=None \
   --trainer.seed=43 \
   --logging.framework_name=wandb \
-  --logging.project_name=cifar10-sam-noise-co-teaching
+  --logging.project_name=cifar10-sam-noise-bootstrap
 
 python train_bootstrap.py config/train_sam.yaml \
   --optimizer.opt_name=sam \
@@ -179,7 +179,7 @@ python train_bootstrap.py config/train_sam.yaml \
   --dataloader.samples_per_class=None \
   --trainer.seed=44 \
   --logging.framework_name=wandb \
-  --logging.project_name=cifar10-sam-noise-co-teaching
+  --logging.project_name=cifar10-sam-noise-bootstrap
 
 
 python train_bootstrap.py config/train_sam.yaml \
@@ -194,7 +194,7 @@ python train_bootstrap.py config/train_sam.yaml \
   --dataloader.samples_per_class=None \
   --trainer.seed=42 \
   --logging.framework_name=wandb \
-  --logging.project_name=cifar10-sam-noise-co-teaching
+  --logging.project_name=cifar10-sam-noise-bootstrap
 
 python train_bootstrap.py config/train_sam.yaml \
   --optimizer.opt_name=sam \
@@ -208,7 +208,7 @@ python train_bootstrap.py config/train_sam.yaml \
   --dataloader.samples_per_class=None \
   --trainer.seed=43 \
   --logging.framework_name=wandb \
-  --logging.project_name=cifar10-sam-noise-co-teaching
+  --logging.project_name=cifar10-sam-noise-bootstrap
 
 python train_bootstrap.py config/train_sam.yaml \
   --optimizer.opt_name=sam \
@@ -222,7 +222,7 @@ python train_bootstrap.py config/train_sam.yaml \
   --dataloader.samples_per_class=None \
   --trainer.seed=44 \
   --logging.framework_name=wandb \
-  --logging.project_name=cifar10-sam-noise-co-teaching
+  --logging.project_name=cifar10-sam-noise-bootstrap
   
 
 
@@ -236,7 +236,7 @@ python train_bootstrap.py config/train_sgd.yaml \
   --dataloader.samples_per_class=None \
   --trainer.seed=42 \
   --logging.framework_name=wandb \
-  --logging.project_name=cifar100-sam-noise-co-teaching
+  --logging.project_name=cifar100-sam-noise-bootstrap
 
 python train_bootstrap.py config/train_sgd.yaml \
   --optimizer.opt_name=sgd \
@@ -247,7 +247,7 @@ python train_bootstrap.py config/train_sgd.yaml \
   --dataloader.samples_per_class=None \
   --trainer.seed=43 \
   --logging.framework_name=wandb \
-  --logging.project_name=cifar100-sam-noise-co-teaching
+  --logging.project_name=cifar100-sam-noise-bootstrap
 
 python train_bootstrap.py config/train_sgd.yaml \
   --optimizer.opt_name=sgd \
@@ -258,7 +258,7 @@ python train_bootstrap.py config/train_sgd.yaml \
   --dataloader.samples_per_class=None \
   --trainer.seed=44 \
   --logging.framework_name=wandb \
-  --logging.project_name=cifar100-sam-noise-co-teaching
+  --logging.project_name=cifar100-sam-noise-bootstrap
 
 python train_bootstrap.py config/train_sgd.yaml \
   --optimizer.opt_name=sgd \
@@ -269,7 +269,7 @@ python train_bootstrap.py config/train_sgd.yaml \
   --dataloader.samples_per_class=None \
   --trainer.seed=42 \
   --logging.framework_name=wandb \
-  --logging.project_name=cifar100-sam-noise-co-teaching
+  --logging.project_name=cifar100-sam-noise-bootstrap
 
 python train_bootstrap.py config/train_sgd.yaml \
   --optimizer.opt_name=sgd \
@@ -280,7 +280,7 @@ python train_bootstrap.py config/train_sgd.yaml \
   --dataloader.samples_per_class=None \
   --trainer.seed=43 \
   --logging.framework_name=wandb \
-  --logging.project_name=cifar100-sam-noise-co-teaching
+  --logging.project_name=cifar100-sam-noise-bootstrap
 
 python train_bootstrap.py config/train_sgd.yaml \
   --optimizer.opt_name=sgd \
@@ -291,7 +291,7 @@ python train_bootstrap.py config/train_sgd.yaml \
   --dataloader.samples_per_class=None \
   --trainer.seed=44 \
   --logging.framework_name=wandb \
-  --logging.project_name=cifar100-sam-noise-co-teaching
+  --logging.project_name=cifar100-sam-noise-bootstrap
 
 python train_bootstrap.py config/train_sam.yaml \
   --optimizer.opt_name=sam \
@@ -303,7 +303,7 @@ python train_bootstrap.py config/train_sam.yaml \
   --dataloader.samples_per_class=None \
   --trainer.seed=42 \
   --logging.framework_name=wandb \
-  --logging.project_name=cifar100-sam-noise-co-teaching
+  --logging.project_name=cifar100-sam-noise-bootstrap
 
 python train_bootstrap.py config/train_sam.yaml \
   --optimizer.opt_name=sam \
@@ -315,7 +315,7 @@ python train_bootstrap.py config/train_sam.yaml \
   --dataloader.samples_per_class=None \
   --trainer.seed=43 \
   --logging.framework_name=wandb \
-  --logging.project_name=cifar100-sam-noise-co-teaching
+  --logging.project_name=cifar100-sam-noise-bootstrap
 
 python train_bootstrap.py config/train_sam.yaml \
   --optimizer.opt_name=sam \
@@ -327,7 +327,7 @@ python train_bootstrap.py config/train_sam.yaml \
   --dataloader.samples_per_class=None \
   --trainer.seed=44 \
   --logging.framework_name=wandb \
-  --logging.project_name=cifar100-sam-noise-co-teaching
+  --logging.project_name=cifar100-sam-noise-bootstrap
 
 
 python train_bootstrap.py config/train_sam.yaml \
@@ -340,7 +340,7 @@ python train_bootstrap.py config/train_sam.yaml \
   --dataloader.samples_per_class=None \
   --trainer.seed=42 \
   --logging.framework_name=wandb \
-  --logging.project_name=cifar100-sam-noise-co-teaching
+  --logging.project_name=cifar100-sam-noise-bootstrap
 
 python train_bootstrap.py config/train_sam.yaml \
   --optimizer.opt_name=sam \
@@ -352,7 +352,7 @@ python train_bootstrap.py config/train_sam.yaml \
   --dataloader.samples_per_class=None \
   --trainer.seed=43 \
   --logging.framework_name=wandb \
-  --logging.project_name=cifar100-sam-noise-co-teaching
+  --logging.project_name=cifar100-sam-noise-bootstrap
 
 python train_bootstrap.py config/train_sam.yaml \
   --optimizer.opt_name=sam \
@@ -364,7 +364,7 @@ python train_bootstrap.py config/train_sam.yaml \
   --dataloader.samples_per_class=None \
   --trainer.seed=44 \
   --logging.framework_name=wandb \
-  --logging.project_name=cifar100-sam-noise-co-teaching
+  --logging.project_name=cifar100-sam-noise-bootstrap
 
 
 ####
@@ -380,7 +380,7 @@ python train_bootstrap.py config/train_sam.yaml \
   --dataloader.samples_per_class=None \
   --trainer.seed=42 \
   --logging.framework_name=wandb \
-  --logging.project_name=cifar100-sam-noise-co-teaching
+  --logging.project_name=cifar100-sam-noise-bootstrap
 
 python train_bootstrap.py config/train_sam.yaml \
   --optimizer.opt_name=sam \
@@ -394,7 +394,7 @@ python train_bootstrap.py config/train_sam.yaml \
   --dataloader.samples_per_class=None \
   --trainer.seed=43 \
   --logging.framework_name=wandb \
-  --logging.project_name=cifar100-sam-noise-co-teaching
+  --logging.project_name=cifar100-sam-noise-bootstrap
 
 python train_bootstrap.py config/train_sam.yaml \
   --optimizer.opt_name=sam \
@@ -408,7 +408,7 @@ python train_bootstrap.py config/train_sam.yaml \
   --dataloader.samples_per_class=None \
   --trainer.seed=44 \
   --logging.framework_name=wandb \
-  --logging.project_name=cifar100-sam-noise-co-teaching
+  --logging.project_name=cifar100-sam-noise-bootstrap
 
 
 python train_bootstrap.py config/train_sam.yaml \
@@ -423,7 +423,7 @@ python train_bootstrap.py config/train_sam.yaml \
   --dataloader.samples_per_class=None \
   --trainer.seed=42 \
   --logging.framework_name=wandb \
-  --logging.project_name=cifar100-sam-noise-co-teaching
+  --logging.project_name=cifar100-sam-noise-bootstrap
 
 python train_bootstrap.py config/train_sam.yaml \
   --optimizer.opt_name=sam \
@@ -437,7 +437,7 @@ python train_bootstrap.py config/train_sam.yaml \
   --dataloader.samples_per_class=None \
   --trainer.seed=43 \
   --logging.framework_name=wandb \
-  --logging.project_name=cifar100-sam-noise-co-teaching
+  --logging.project_name=cifar100-sam-noise-bootstrap
 
 python train_bootstrap.py config/train_sam.yaml \
   --optimizer.opt_name=sam \
@@ -451,5 +451,5 @@ python train_bootstrap.py config/train_sam.yaml \
   --dataloader.samples_per_class=None \
   --trainer.seed=44 \
   --logging.framework_name=wandb \
-  --logging.project_name=cifar100-sam-noise-co-teaching
+  --logging.project_name=cifar100-sam-noise-bootstrap
   
