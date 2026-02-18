@@ -783,6 +783,114 @@ def loop_one_epoch_warmup(dataloader, net, optimizer, device, criterion, logging
     logging_dict[f"Warmup/{tag}_acc"] = 100.0 * correct / max(1, total)
 
 
+def dividemix_step(
+    inputs,
+    targets,
+    indices_np,
+    net,
+    net_other,
+    p_clean_other,
+    device,
+    num_classes,
+    p_threshold=0.5,
+    T=0.5,
+    alpha=4.0,
+    lambda_u=25.0,
+):
+    """
+    One DivideMix training step (forward + loss computation)
+
+    Returns:
+        loss, loss_x, loss_u, stats_dict
+    """
+
+    # -----------------------
+    # 1) Split labeled / unlabeled
+    # -----------------------
+    p_clean = torch.from_numpy(p_clean_other[indices_np]).to(device)  # [B]
+    is_labeled = (p_clean >= p_threshold)
+    is_unlabeled = ~is_labeled
+
+    if is_labeled.sum() == 0:
+        return None, None, None, {"skip": True}
+
+    x_l = inputs[is_labeled]
+    y_l = targets[is_labeled]
+
+    x_u = inputs[is_unlabeled]
+
+    # -----------------------
+    # 2) Label refinement (labeled)
+    # -----------------------
+    with torch.no_grad():
+        p = torch.softmax(net(x_l), dim=1)
+        y_one = one_hot(y_l, num_classes)
+
+        w = p_clean[is_labeled].unsqueeze(1)  # [Bl,1]
+        y_refine = w * y_one + (1 - w) * p
+        y_refine = y_refine / (y_refine.sum(dim=1, keepdim=True) + 1e-12)
+
+    # -----------------------
+    # 3) Pseudo-label (unlabeled)
+    # -----------------------
+    if x_u.numel() > 0:
+        with torch.no_grad():
+            pu1 = torch.softmax(net(x_u), dim=1)
+            pu2 = torch.softmax(net_other(x_u), dim=1)
+            pu = 0.5 * (pu1 + pu2)
+            y_u = sharpen(pu, T=T)
+    else:
+        y_u = None
+
+    # -----------------------
+    # 4) MixUp
+    # -----------------------
+    if x_u.numel() > 0:
+        x_all = torch.cat([x_l, x_u], dim=0)
+        y_all = torch.cat([y_refine, y_u], dim=0)
+    else:
+        x_all = x_l
+        y_all = y_refine
+
+    x_mix, y_mix, _ = mixup(x_all, y_all, alpha=alpha)
+
+    # split back
+    Bl = x_l.size(0)
+    x_mix_l, y_mix_l = x_mix[:Bl], y_mix[:Bl]
+
+    if x_u.numel() > 0:
+        x_mix_u, y_mix_u = x_mix[Bl:], y_mix[Bl:]
+    else:
+        x_mix_u, y_mix_u = None, None
+
+    # -----------------------
+    # 5) Loss computation
+    # -----------------------
+    logits = net(x_mix)
+
+    logits_l = logits[:Bl]
+    loss_x = -(y_mix_l * torch.log_softmax(logits_l, dim=1)).sum(dim=1).mean()
+
+    if x_u is not None and x_u.numel() > 0:
+        logits_u = logits[Bl:]
+        pu = torch.softmax(logits_u, dim=1)
+        loss_u = torch.mean((pu - y_mix_u) ** 2)
+    else:
+        loss_u = torch.tensor(0.0, device=device)
+
+    loss = loss_x + lambda_u * loss_u
+
+    # -----------------------
+    # 6) Stats
+    # -----------------------
+    stats = {
+        "labeled_bs": int(is_labeled.sum().item()),
+        "unlabeled_bs": int(is_unlabeled.sum().item()),
+    }
+
+    return loss, loss_x, loss_u
+
+
 def train_dividemix_epoch(
     dataloader,
     net,
@@ -805,7 +913,6 @@ def train_dividemix_epoch(
 
     loss_sum, loss_x_sum, loss_u_sum = 0.0, 0.0, 0.0
     total, correct = 0, 0
-    labeled_ct, unlabeled_ct = 0, 0
 
     for batch_idx, batch in enumerate(dataloader):
         if len(batch) == 4:
@@ -822,80 +929,30 @@ def train_dividemix_epoch(
         targets = targets.to(device)
         indices_np = indices.cpu().numpy()
 
-        # clean prob from OTHER net
-        p_clean = torch.from_numpy(p_clean_other[indices_np]).to(device)  # [B]
-        is_labeled = (p_clean >= p_threshold)
-        is_unlabeled = ~is_labeled
+        opt_name = type(optimizer).__name__
+        if opt_name == "SGD":
+            first_loss, first_loss_x, first_loss_u = dividemix_step(inputs, targets, indices_np, net, net_other, p_clean_other, device, num_classes, p_threshold, T, alpha, lambda_u)
 
-        if is_labeled.sum() == 0:
-            # if no labeled in this batch, skip (rare but possible if threshold too high)
-            continue
-
-        x_l = inputs[is_labeled]
-        y_l = targets[is_labeled]
-        labeled_ct += int(is_labeled.sum().item())
-
-        x_u = inputs[is_unlabeled]
-        unlabeled_ct += int(is_unlabeled.sum().item())
-
-        # ---- Label refinement for labeled samples ----
-        with torch.no_grad():
-            p = torch.softmax(net(x_l), dim=1)
-            y_one = one_hot(y_l, num_classes)
-            w = p_clean[is_labeled].unsqueeze(1)   # [Bl,1]
-            y_refine = w * y_one + (1 - w) * p     # blend GT and prediction
-            y_refine = y_refine / (y_refine.sum(dim=1, keepdim=True) + 1e-12)
-
-        # ---- Pseudo-label guessing for unlabeled samples ----
-        if x_u.numel() > 0:
-            with torch.no_grad():
-                pu1 = torch.softmax(net(x_u), dim=1)
-                pu2 = torch.softmax(net_other(x_u), dim=1)
-                pu = 0.5 * (pu1 + pu2)
-                y_u = sharpen(pu, T=T)
+            first_loss.backward()
+            optimizer.step()
+            optimizer.zero_grad()
         else:
-            y_u = None
+            enable_running_stats(net)
+            optimizer.zero_grad()
+            first_loss, first_loss_x, first_loss_u = dividemix_step(inputs, targets, indices_np, net, net_other, p_clean_other, device, num_classes, p_threshold, T, alpha, lambda_u)
+            first_loss.backward()
+            optimizer.first_step(zero_grad=True)
 
-        # ---- MixUp on (labeled + unlabeled) ----
-        if x_u.numel() > 0:
-            x_all = torch.cat([x_l, x_u], dim=0)
-            y_all = torch.cat([y_refine, y_u], dim=0)
-        else:
-            x_all = x_l
-            y_all = y_refine
-
-        x_mix, y_mix, _ = mixup(x_all, y_all, alpha=alpha)
-
-        # split back
-        Bl = x_l.size(0)
-        x_mix_l, y_mix_l = x_mix[:Bl], y_mix[:Bl]
-        x_mix_u, y_mix_u = x_mix[Bl:], y_mix[Bl:] if x_u.numel() > 0 else (None, None)
-
-        # ---- Compute losses ----
-        logits = net(x_mix)
-
-        logits_l = logits[:Bl]
-        # cross-entropy with soft targets:
-        loss_x = -(y_mix_l * torch.log_softmax(logits_l, dim=1)).sum(dim=1).mean()
-
-        if x_u.numel() > 0:
-            logits_u = logits[Bl:]
-            pu = torch.softmax(logits_u, dim=1)
-            loss_u = torch.mean((pu - y_mix_u) ** 2)   # MSE consistency
-        else:
-            loss_u = torch.tensor(0.0, device=device)
-
-        loss = loss_x + lambda_u * loss_u
-
-        optimizer.zero_grad()
-        loss.backward()
-        optimizer.step()
+            disable_running_stats(net)
+            second_loss, _, _ = dividemix_step(inputs, targets, indices_np, net, net_other, p_clean_other, device, num_classes, p_threshold, T, alpha, lambda_u)
+            second_loss.backward()
+            optimizer.second_step(zero_grad=True)
 
         # ---- Stats ----
         with torch.no_grad():
-            loss_sum += loss.item()
-            loss_x_sum += loss_x.item()
-            loss_u_sum += loss_u.item()
+            loss_sum += first_loss.item()
+            loss_x_sum += first_loss_x.item()
+            loss_u_sum += first_loss_u.item()
 
             # report accuracy on original inputs using hard labels (net predictions)
             logits_orig = net(inputs)
@@ -907,8 +964,7 @@ def train_dividemix_epoch(
             progress_bar(batch_idx, len(dataloader),
                          f"[DivideMix {tag}] Lx: {loss_x_sum/(batch_idx+1):.3f} | "
                          f"Lu: {loss_u_sum/(batch_idx+1):.3f} | "
-                         f"Acc: {100.0*correct/total:.2f}% | "
-                         f"L/U: {labeled_ct}/{unlabeled_ct}")
+                         f"Acc: {100.0*correct/total:.2f}%")
 
     if logging_dict is not None:
         denom = max(1, len(dataloader))
@@ -916,5 +972,3 @@ def train_dividemix_epoch(
         logging_dict[f"DivideMix/{tag}_loss_x"] = loss_x_sum / denom
         logging_dict[f"DivideMix/{tag}_loss_u"] = loss_u_sum / denom
         logging_dict[f"DivideMix/{tag}_acc"] = 100.0 * correct / max(1, total)
-        logging_dict[f"DivideMix/{tag}_labeled_ct"] = labeled_ct
-        logging_dict[f"DivideMix/{tag}_unlabeled_ct"] = unlabeled_ct
