@@ -342,7 +342,8 @@ def loop_one_epoch(
 
             logging_dict[f"{loop_type.title()}/best_acc"] = best_acc
 
-        logging_dict[f"{loop_type.title()}/gen_gap"] = logging_dict["Train/acc"] - acc
+        if "Train/acc" in logging_dict:
+            logging_dict["Test/gen_gap"] = logging_dict["Train/acc"] - acc
 
     # --- Resume from checkpoint ---
     else:
