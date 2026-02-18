@@ -117,7 +117,7 @@ if __name__ == "__main__":
             total_epochs=EPOCHS,
         )
 
-        best_acc, acc = loop_one_epoch_co_teaching(
+        best_acc, acc = loop_one_epoch(
             dataloader=test_dataloader,
             net=net1,                  # evaluate net1 (simple)
             criterion=criterion,
