@@ -99,7 +99,7 @@ if __name__ == "__main__":
         num_gradual = cfg['trainer'].get('num_gradual', 10)
         exponent = cfg['trainer'].get('exponent', 1.0)
 
-        loop_one_epoch(
+        loop_one_epoch_co_teaching(
             dataloader=train_dataloader,
             net=(net1, net2) if use_coteaching else net1,
             criterion=criterion,
@@ -117,7 +117,7 @@ if __name__ == "__main__":
             total_epochs=EPOCHS,
         )
 
-        best_acc, acc = loop_one_epoch(
+        best_acc, acc = loop_one_epoch_co_teaching(
             dataloader=test_dataloader,
             net=net1,                  # evaluate net1 (simple)
             criterion=criterion,
