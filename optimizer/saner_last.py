@@ -102,7 +102,7 @@ class SANERLAST(torch.optim.Optimizer):
         return norm
     
     def set_alpha(self, alpha):
-        self.condition = alpha
+        self.alpha = alpha
     
     def load_state_dict(self, state_dict):
         super().load_state_dict(state_dict)

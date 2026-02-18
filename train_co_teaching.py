@@ -42,7 +42,6 @@ elif framework_name == 'tensorboard':
     writer = SummaryWriter(log_dir=tb_log_dir)
 pprint.pprint(cfg)
 
-os.makedirs('labels', exist_ok=True)
 ################################
 #### 1. BUILD THE DATASET
 ################################
@@ -54,62 +53,87 @@ else:
 ################################
 #### 2. BUILD THE NEURAL NETWORK
 ################################
-net = get_model(**cfg['model'], num_classes=num_classes)
-net = net.to(device)
-total_params = sum(p.numel() for p in net.parameters())
-print(f'==> Number of parameters in {cfg["model"]}: {total_params}')
+net1 = get_model(**cfg['model'], num_classes=num_classes).to(device)
+net2 = get_model(**cfg['model'], num_classes=num_classes).to(device)
+
+total_params1 = sum(p.numel() for p in net1.parameters())
+total_params2 = sum(p.numel() for p in net2.parameters())
+print(f'==> Number of parameters (net1) in {cfg["model"]}: {total_params1}')
+print(f'==> Number of parameters (net2) in {cfg["model"]}: {total_params2}')
 
 ################################
 #### 3.a OPTIMIZING MODEL PARAMETERS
 ################################
-criterion = jo_criterion
-test_criterion = nn.CrossEntropyLoss()
+criterion = nn.CrossEntropyLoss()
+
+# IMPORTANT: per-sample criterion for co-teaching selection
+criterion_vec = nn.CrossEntropyLoss(reduction="none")
+
 opt_name = cfg['optimizer'].pop('opt_name', None)
-optimizer = get_optimizer(net, opt_name, cfg['optimizer'])
+optimizer1 = get_optimizer(net1, opt_name, cfg['optimizer'])
+optimizer2 = get_optimizer(net2, opt_name, cfg['optimizer'])
 
 if scheduler == 'cosine':
-    scheduler = torch.optim.lr_scheduler.CosineAnnealingLR(optimizer, T_max=EPOCHS)
+    scheduler1 = torch.optim.lr_scheduler.CosineAnnealingLR(optimizer1, T_max=EPOCHS)
+    scheduler2 = torch.optim.lr_scheduler.CosineAnnealingLR(optimizer2, T_max=EPOCHS)
 elif scheduler == 'tiny_imagenet':
-    scheduler = torch.optim.lr_scheduler.MultiStepLR(optimizer, milestones=[40, 80])
+    scheduler1 = torch.optim.lr_scheduler.MultiStepLR(optimizer1, milestones=[40, 80])
+    scheduler2 = torch.optim.lr_scheduler.MultiStepLR(optimizer2, milestones=[40, 80])
 else:
-    scheduler = torch.optim.lr_scheduler.MultiStepLR(optimizer, milestones=[int(EPOCHS * 0.5), int(EPOCHS * 0.75)])
-early_stopping = EarlyStopping(patience=20)
+    scheduler1 = torch.optim.lr_scheduler.MultiStepLR(optimizer1, milestones=[int(EPOCHS * 0.5), int(EPOCHS * 0.75)])
+    scheduler2 = torch.optim.lr_scheduler.MultiStepLR(optimizer2, milestones=[int(EPOCHS * 0.5), int(EPOCHS * 0.75)])
+
 
 ################################
 #### 3.b Training 
 ################################
 if __name__ == "__main__":
-    if resume:
-        for epoch in range(1, start_epoch+1):
-            scheduler.step()
     for epoch in range(start_epoch+1, EPOCHS+1):
         print('\nEpoch: %d' % epoch)
         if alpha_scheduler:
-            optimizer.set_alpha(get_alpha(epoch, initial_alpha=1, final_alpha=cfg['optimizer']['alpha'], total_epochs=alpha_scheduler))
+            optimizer1.set_alpha(get_alpha(epoch, initial_alpha=1, final_alpha=cfg['optimizer']['alpha'], total_epochs=alpha_scheduler))
+            optimizer2.set_alpha(get_alpha(epoch, initial_alpha=1, final_alpha=cfg['optimizer']['alpha'], total_epochs=alpha_scheduler))
 
-        loop_one_epoch_jo(
+        use_coteaching = cfg['trainer'].get('coteaching', True)
+        forget_rate = cfg['trainer'].get('forget_rate', 0.2)
+        num_gradual = cfg['trainer'].get('num_gradual', 10)
+        exponent = cfg['trainer'].get('exponent', 1.0)
+
+        loop_one_epoch(
             dataloader=train_dataloader,
-            net=net,
+            net=(net1, net2) if use_coteaching else net1,
             criterion=criterion,
-            optimizer=optimizer,
+            optimizer=(optimizer1, optimizer2) if use_coteaching else optimizer1,
             device=device,
             logging_dict=logging_dict,
             epoch=epoch,
             loop_type='train',
-            logging_name=logging_name)
-        best_acc, acc = loop_one_epoch_jo(
+            logging_name=logging_name,
+            coteaching=use_coteaching,
+            criterion_vec=criterion_vec,
+            forget_rate=forget_rate,
+            num_gradual=num_gradual,
+            exponent=exponent,
+            total_epochs=EPOCHS,
+        )
+
+        best_acc, acc = loop_one_epoch(
             dataloader=test_dataloader,
-            net=net,
-            criterion=test_criterion,
-            optimizer=optimizer,
+            net=net1,                  # evaluate net1 (simple)
+            criterion=criterion,
+            optimizer=optimizer1,       # unused in test
             device=device,
             logging_dict=logging_dict,
             epoch=epoch,
             loop_type='test',
             logging_name=logging_name,
-            best_acc=best_acc)
-        if scheduler is not None:
-            scheduler.step()
+            best_acc=best_acc
+        )
+
+        if scheduler1 is not None:
+            scheduler1.step()
+            scheduler2.step()
+
         
         if framework_name == 'wandb':
             wandb.log(logging_dict)

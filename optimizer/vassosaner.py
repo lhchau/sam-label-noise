@@ -1,49 +1,44 @@
 import torch
 
-class FriendlySAMEAN(torch.optim.Optimizer):
-    def __init__(self, params, rho=0.05, sigma=1, lmbda=0.9, adaptive=False, group="B", condition=1, **kwargs):
+
+class VASSOSANER(torch.optim.Optimizer):
+    def __init__(self, params, rho=0.05, theta=0.2, adaptive=False, group="B", alpha=1, **kwargs):
         assert rho >= 0.0, f"Invalid rho, should be non-negative: {rho}"
 
         defaults = dict(rho=rho, adaptive=adaptive, **kwargs)
-        super(FriendlySAMEAN, self).__init__(params, defaults)
-
-        self.sigma = sigma
-        self.lmbda = lmbda
-        print ('FriendlySAM sigma:', self.sigma, 'lambda:', self.lmbda)
+        super(VASSOSANER, self).__init__(params, defaults)
         
+        self.theta = theta
         self.group = group
-        self.condition = condition
-
+        self.alpha = alpha
+        
     @torch.no_grad()
-    def first_step(self, zero_grad=False):
-
+    def first_step(self, zero_grad=False):   
         for group in self.param_groups:
-            for p in group["params"]:      
-                if p.grad is None: continue       
-                param_state = self.state[p]
-
-                param_state['first_grad'] = p.grad.clone()
-                grad = p.grad.clone()
-
-                if not "momentum" in self.state[p]:
-                    self.state[p]["momentum"] = grad
-                else:
-                    p.grad -= self.state[p]["momentum"] * self.sigma
-                    self.state[p]["momentum"] = self.state[p]["momentum"] * self.lmbda + grad * (1 - self.lmbda)
-            
-        grad_norm = self._grad_norm()
-        for group in self.param_groups:
-            scale = group["rho"] / (grad_norm + 1e-12)
-
             for p in group["params"]:
                 if p.grad is None: continue
                 param_state = self.state[p]
+                
+                param_state['first_grad'] = p.grad.clone()
 
-                e_w = (torch.pow(p, 2) if group["adaptive"] else 1.0) * p.grad * scale.to(p)
+                if 'ema' not in self.state[p]:
+                    param_state['ema'] = p.grad.clone().detach()
+                else:
+                    param_state['ema'].mul_(1 - self.theta)
+                    param_state['ema'].add_(p.grad, alpha=self.theta)
+        
+        self.first_grad_norm = self._grad_norm('ema')
+        for group in self.param_groups:
+            scale = group['rho'] / (self.first_grad_norm + 1e-12)
+            for p in group['params']:
+                if p.grad is None: continue
+                param_state = self.state[p]
+                
+                e_w = (torch.pow(p, 2) if group["adaptive"] else 1.0) * param_state['ema'] * scale
                 p.add_(e_w)  # climb to the local maximum "w + e(w)"
                 
+                param_state['first_grad'] = p.grad.clone()
                 param_state['e_w'] = e_w.clone()
-
         if zero_grad: self.zero_grad()
 
     @torch.no_grad()
@@ -65,7 +60,7 @@ class FriendlySAMEAN(torch.optim.Optimizer):
                 elif self.group == "C":
                     mask = ratio < 0
                 
-                d_p = p.grad.mul(mask).mul(self.condition) + p.grad.mul(torch.logical_not(mask))
+                d_p = p.grad.mul(mask).mul(self.alpha) + p.grad.mul(torch.logical_not(mask))
                 if weight_decay != 0:
                     d_p.add_(p.data, alpha=weight_decay)
                     
@@ -85,21 +80,46 @@ class FriendlySAMEAN(torch.optim.Optimizer):
         closure()
         self.second_step()
 
-    def _grad_norm(self):
+    @torch.no_grad()
+    def _grad_norm(self, by=None):
+        shared_device = self.param_groups[0]["params"][0].device  # put everything on the same device, in case of model parallelism
+        if by is None:
+            norm = torch.norm(
+                        torch.stack([
+                            ((torch.abs(p) if group["adaptive"] else 1.0) * p.grad).norm(p=2).to(shared_device)
+                            for group in self.param_groups for p in group["params"]
+                            if p.grad is not None
+                        ]),
+                        p=2
+                )
+            return norm
+        else:
+            norm = torch.norm(
+                        torch.stack([
+                            ((torch.abs(p) if group["adaptive"] else 1.0) * self.state[p][by]).norm(p=2).to(shared_device)
+                            for group in self.param_groups for p in group["params"]
+                            if p.grad is not None
+                        ]),
+                        p=2
+                )
+            return norm
+        
+    @torch.no_grad()
+    def _weight_norm(self):
         shared_device = self.param_groups[0]["params"][0].device  # put everything on the same device, in case of model parallelism
         norm = torch.norm(
                     torch.stack([
-                        ((torch.abs(p) if group["adaptive"] else 1.0) * p.grad).norm(p=2).to(shared_device)
+                        p.data.norm(p=2).to(shared_device)
                         for group in self.param_groups for p in group["params"]
                         if p.grad is not None
                     ]),
                     p=2
                )
         return norm
-
+    
     def load_state_dict(self, state_dict):
         super().load_state_dict(state_dict)
-        self.base_optimizer.param_groups = self.param_groups   
-        
+        self.base_optimizer.param_groups = self.param_groups
+
     def set_alpha(self, alpha):
-        self.condition = alpha
+        self.alpha = alpha

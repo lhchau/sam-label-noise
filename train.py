@@ -83,7 +83,7 @@ if __name__ == "__main__":
     for epoch in range(start_epoch+1, EPOCHS+1):
         print('\nEpoch: %d' % epoch)
         if alpha_scheduler:
-            optimizer.set_alpha(get_alpha(epoch, initial_alpha=1, final_alpha=cfg['optimizer']['condition'], total_epochs=alpha_scheduler))
+            optimizer.set_alpha(get_alpha(epoch, initial_alpha=1, final_alpha=cfg['optimizer']['alpha'], total_epochs=alpha_scheduler))
 
         loop_one_epoch(
             dataloader=train_dataloader,

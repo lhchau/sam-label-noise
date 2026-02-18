@@ -4,15 +4,12 @@ from .samonly import SAMONLY
 from .samwo import SAMWO
 from .saner import SANER
 from .fsam import FriendlySAM
-from .fsamean import FriendlySAMEAN
+from .fsaner import FriendlySANER
 from .vasso import VASSO
-from .vassosamean import VASSOSAMEAN
+from .vassosaner import VASSOSANER
 from .gsam import GSAM
-from .gsamean import GSAMEAN
-from .samabs import SAMABS
-from .samba import SAMBA
+from .gsaner import GSANER
 from .saner_last import SANERLAST
-from .samba_last import SAMBALAST
 
 def get_optimizer(
     net,
@@ -28,25 +25,20 @@ def get_optimizer(
         return SAMWO(net.parameters(), **opt_hyperpara)
     elif opt_name == 'saner':
         return SANER(net.parameters(), **opt_hyperpara)
-    elif opt_name == 'samabs':
-        return SAMABS(net.parameters(), **opt_hyperpara)
-    elif opt_name == 'samba':
         return SAMBA(net.parameters(), **opt_hyperpara)
     elif opt_name == 'fsam':
         return FriendlySAM(net.parameters(), **opt_hyperpara)
-    elif opt_name == 'fsamean':
-        return FriendlySAMEAN(net.parameters(), **opt_hyperpara)
+    elif opt_name == 'fsaner':
+        return FriendlySANER(net.parameters(), **opt_hyperpara)
     elif opt_name == 'vasso':
         return VASSO(net.parameters(), **opt_hyperpara)
-    elif opt_name == 'vassosamean':
-        return VASSOSAMEAN(net.parameters(), **opt_hyperpara)
+    elif opt_name == 'vassosaner':
+        return VASSOSANER(net.parameters(), **opt_hyperpara)
     elif opt_name == 'gsam':
         return GSAM(net.parameters(), **opt_hyperpara)
-    elif opt_name == 'gsamean':
-        return GSAMEAN(net.parameters(), **opt_hyperpara)
+    elif opt_name == 'gsaner':
+        return GSANER(net.parameters(), **opt_hyperpara)
     elif opt_name == 'sanerlast':
         return SANERLAST(net.parameters(), **opt_hyperpara)
-    elif opt_name == 'sambalast':
-        return SAMBALAST(net.parameters(), **opt_hyperpara)
     else:
         raise ValueError("Invalid optimizer!!!")
